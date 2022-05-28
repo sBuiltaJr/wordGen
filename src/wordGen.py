@@ -6,24 +6,29 @@ import os
 import argparse
 import string
 import random
+import json
 
-class wordGen:
-
-    def __init__(self):
-        """Does this acutally need one though?  Probably just read the dict
-           into memory (who needs RAM anyways?)"""
-        #Defaults generate loosely 'norma' looking text.
 
 #The great thing about dictionaries defined at the script level is their global
 #(public-like) capability, avoiding constant passing down to 'lower' defs.
-params_dict = {'cfg' : ''}
+params_dict = {'cfg' : 'cfg.json'}
 
 
 def loadConfig(cfg_path):
 
-    if str != 'None':
+    global params_dict
+
+    if cfg_path :
         params_dict['cfg'] = cfg_path
-        print(f"it's here: {params_dict['cfg']}")
+        print(f"it's here: {params_dict['cfg']} from {cfg_path}")
+
+    #Sure this is a little sloppy but we don't need the config after this
+    #so there's no reason to keep the old definition anyways and cause an
+    #if split in the code.
+    with open(params_dict['cfg']) as json_file:
+        params_dict = json.load(json_file)
+        
+        print(f"{params_dict['just_spaces']}, {params_dict['block_aligned']}")
 
 
 def main():

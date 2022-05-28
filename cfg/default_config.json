@@ -1,8 +1,14 @@
 {
-	"params" : [
-		{
-			"just_spaces" : "false",
-			"block_aligned" : "false"
-		}
-	]
+	"block_aligned" : "False",
+	"block_count"   : "1",
+	"block_size"    : "256",
+	"dict_path"     : "/usr/share/dict/american-english",
+	"just_spaces"   : "False", #Add other special characters?
+	"out_dir"       : "/data/",
+	"num_outs"      : "1",
+	"num_words"     : "100", #if not using block sizes
+	"randomize"     : "False", #Vary string properties somewhat?
+	"search_seed"   : "0", #Rand seed to find new words
+	"special_count" : "1" #how many space+ character to add between words (including newline)
+	
 }
