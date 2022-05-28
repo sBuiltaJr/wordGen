@@ -3,12 +3,25 @@
 	"block_count"   : "1",
 	"block_size"    : "256",
 	"dict_path"     : "/usr/share/dict/american-english",
-	"just_spaces"   : "False", #Add other special characters?
-	"out_dir"       : "/data/",
+	"just_spaces"   : "False",
+	"out_base"      : "words",
+	"out_dir"       : "../data/",
+	"out_ext"       : ".txt",
 	"num_outs"      : "1",
-	"num_words"     : "100", #if not using block sizes
-	"randomize"     : "False", #Vary string properties somewhat?
-	"search_seed"   : "0", #Rand seed to find new words
-	"special_count" : "1" #how many space+ character to add between words (including newline)
-	
+	"num_words"     : "100",
+	"randomize"     : "False",
+	"search_seed"   : "0",
+	"special_count" : "1",
+	"words_per_par" : "100",
+	"words_per_sen" : "10",
+	"comments" : {
+	        "just_spaces"   : "Add other special characters?",
+        	"num_words"     : "if not using block sizes",
+	        "out_base"      : "The base name for output files (e.g. words -> words_1.txt)",
+		"randomize"     : "Vary string properties somewhat?",
+       		"search_seed"   : "Rand seed to find new words",
+	        "special_count" : "how many space+ character to add between words (including newline)",
+        	"words_per_par" : "The number of words to put in a given paragraph",
+	        "words_per_sen" : "The number of words before adding a period"
+	}
 }
