@@ -2,24 +2,45 @@
 #to fit if necessary.
 
 #####  imports  #####
-import sys
-import os
 import argparse
-import string
-import random
 import json
+import multiprocessing as mp
+import os
+import random
+import string
+import sys
+import time
 
 #####  package variables  #####
 
 #The great thing about dictionaries defined at the package level is their global
 #(public-like) capability, avoiding constant passing down to 'lower' defs.
-params_dict = {'cfg' : '../cfg/default_config.json'}
+params = {'cfg' : '../cfg/default_config.json'}
 
 
 #####  class definitions  #####
+class wordGenWorker(int):
 
+    def __init__(self, file_num):
+        """Currently the worker only needs to create its oject-specific file.
+           The class assumes params has already been initialized to at
+           least default values.
+        """
+        #This doesn't need to be explicitly thread-safe since the dictionary is
+        #assumed initialized and is effectively read-only.
+        global params
 
+        self.out = params['out_dir'] + \
+                   params['out_base'] + \
+                   f'_{file_num}' + \
+                   params['out_ext']
+#        print(f"out: {self.out}\r\n")
+        self.num = file_num
 
+    def genWordFile(self):
+        wait = random.randint(0,10)
+        time.sleep(wait)
+        return self.num
 
 
 #####  package functions  #####
@@ -29,30 +50,53 @@ def loadConfig(cfg_path):
 
        Input : cfg_path : optional CLI input to the json config file
 
-       output : None.
+       Output : None.
     """
-    global params_dict
+    global params
 
     if cfg_path :
-        params_dict['cfg'] = cfg_path
+        params['cfg'] = cfg_path
 
     #Sure this is a little sloppy but we don't need the config after this so
     #there's no reason to keep the old definition anyways and cause an if split
     #in the code.
-    with open(params_dict['cfg']) as json_file:
+    with open(params['cfg']) as json_file:
 
-        params_dict = json.load(json_file)
-        os.makedirs(params_dict['out_dir'], mode=0o664, exist_ok=True)
+        params = json.load(json_file)
+        os.makedirs(params['out_dir'],
+                mode=int(params['out_dir_mode'], 8), exist_ok=True)
 
-        print(f"{params_dict['just_spaces']}, {params_dict['block_aligned']}")
+        print(f"{params['just_spaces']}, {params['block_aligned']}")
     
 
-def genWords():
-    print("stupid Paython")
+def genWorkers():
+    """Invokes n parallel wordgenerators, as defiend in the config file.
+    
+       Input: None.
 
+       Output: None.
+    """
+    pool = mp.Pool(processes=int(params['num_workers'] \
+        if (int(params['num_outs']) >= int(params['num_workers'])) \
+        else params['num_outs']));
+
+    result = {}
+
+    for worker in range(int(params['num_workers'])):
+        result[worker] = pool.apply_async(wordGenWorker(worker))
+        print(f"{result}, {worker}")
+
+    wordGenWorker(0);
 
 #####  main  #####
 def main():
+    """Parses the optionally-supplied config file path and starts the string
+       generator.
+
+       Input : config - Where to find the optional config file.
+
+       Output: None.
+    """
     print("Starting?\r\n")
     parser = argparse.ArgumentParser(
                 description="Generates a set of output text strings based on \
@@ -63,7 +107,7 @@ def main():
     args = parser.parse_args()
 #    try:
     loadConfig(args.config)
-    genWords()
+    genWorkers()
 #    except Exception as err:
 #        print(f"Encountered {err=}, {type(err)=}")
 
@@ -71,9 +115,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-#--One config file to define how the parameters are randomized
-#-- Option to include special characters
-#--Option to limit max word count
-#--option to randomize parameters (number of words per newline, number of spaces/returns)
 
