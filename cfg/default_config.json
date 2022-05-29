@@ -20,6 +20,7 @@
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
+		"block_size"    : "Sets the maximum number of characters in a given file.  set to '0' to use the num_words instead",
 		"dict_path"     : "The fully-qualified path to a \n-separated list of dictionary words",
 	        "just_spaces"   : "Add other special characters?",
 		"num_outs"      : "Number of output files to generate (can inherently limit num_workers)",

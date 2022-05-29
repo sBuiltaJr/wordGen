@@ -1,6 +1,10 @@
 #Generates output of dictionary-supplied words to a given size, notably
 #truncating to fit a given 'block size' if necessary.
 
+#Markovs are being ignored for now cine they're too deterministic and would
+#greatly skew the training data but will probably be optional in the future.
+
+
 #####  imports  #####
 
 import argparse
@@ -15,22 +19,59 @@ import time
 #####  package variables  #####
 
 #The great thing about dictionaries defined at the package level is their global
-#(public-like) capability, avoiding constant passing down to 'lower' defs.
+#(public-like) capability, avoiding constant passing down to 'lower' defs. 
+#Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
 
 
 #####  pool functions  #####
+
+def getByWordLimit(dict_file):
+    """Returns a list of random words limited by count.  This is used when the
+       num_words parameter is *True* in {params}. Size alignment is not 
+       guaranteed and special characters/spaces are not yet added.
+
+       Input : dict_file - file-object to the word dictionary
+
+       Output : words - list of the randomly-selected words from dict_file
+    """
+
+    return words
+
+def getByBlockLimit(dict_file):
+    """Returns a list of random words limited by (output) block size.  This is
+       used when the num_words parameter is *False* in {params}.  The last word
+       may be truncated if a list exactly matching {block_size} is not created.
+       Finally, this list may need to be further truncated by consumers if
+       other parameters, like {randomize} or {special_count} are used.
+
+       Input : dict_file - file-object to the word dictionary
+
+       Output : words - list of the randomly-selected words form dict_file
+    """
+
+    return words
+
 
 def getDictWords(dict_file);
     """Opens the supplied dictionary and returns a random set of words of size
        specificed in the config.  This function is intentionally separate to 
        allow future upgrades to dictionary sources (it's arguably more efficent
        to not have the list return).
+       This function assumes the list request and word source are reasonable 
+       (e.g. not millions of words or a single word size filling all of RAM)
 
-       Input : dict_file - file-path to the word dictionary
+       Input : dict_file - file-object to the word dictionary
 
-       output : words - list of the randomly-selected words from dict_file
+       Output : words - list of the randomly-selected words from dict_file
     """
+
+    if (0 >= int(params['block_size'])):
+        words = getByBlockLimit(dict_file)
+    else:
+        words= getByWordLimit(dict_file)
+
+    return words
 
 def genFile(process_file, word_list):
     """Writes the supplied word list to the supplied file, given the values
@@ -39,8 +80,10 @@ def genFile(process_file, word_list):
 
        Input : process_file - Where to write the data pattern
                words - list of order-randomizable source words for the file
-    """
 
+       Output: None.
+    """
+    return
 
 def genWordFile(file_num):
     """Currently the worker only needs to create its oject-specific file. The
@@ -130,6 +173,7 @@ def genWorkers():
         #We must stop the zombie apocalypse!
         pool.close()
         pool.join()
+
 
 #####  main  #####
 
