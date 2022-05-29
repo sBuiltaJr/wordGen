@@ -1,12 +1,12 @@
 {
 	"block_aligned" : "False",
-	"block_count"   : "10",
+	"block_count"   : "1",
 	"block_size"    : "256",
 	"dict_path"     : "/usr/share/dict/american-english",
 	"just_spaces"   : "False",
 	"out_base"      : "words",
 	"out_dir"       : "../data/",
-	"out_dir_mode"  : "664",
+	"out_dir_mode"  : "755",
 	"out_ext"       : ".txt",
 	"num_outs"      : "10",
 	"num_rand_bits" : "128",
@@ -33,5 +33,17 @@
 	        "special_count" : "how many space+ character to add between words (including newline)",
         	"words_per_par" : "The number of words to put in a given paragraph",
 	        "words_per_sen" : "The number of words before adding a period"
+	},
+	"num_gen" :
+	{
+		"count"     : "0",
+		"range_max" : "100",
+		"range_min" : "-100",
+		"comments"  :
+		{
+			"count"     : "How many nubmers to generate; block settings might prevent all from being included.",
+			"range_max" : "The maximum value for the num array elements, whether float or int.  Type much match range_min",
+			"range_min" : "The minimum value for the num array elements, whether float or int.  Type must match range_max"
+		}
 	}
 }
