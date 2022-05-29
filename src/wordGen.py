@@ -1,5 +1,5 @@
-#Generates output of American English words to a given size, notably truncating
-#to fit if necessary.
+#Generates output of dictionary-supplied words to a given size, notably
+#truncating to fit a given 'block size' if necessary.
 
 #####  imports  #####
 
@@ -32,6 +32,10 @@ def genWordFile(file_num):
     out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
           params['out_ext']
 
+    #Note the possibility of IO exceptions if /dev/urandom (or similar) is not
+    #initialized/empty on your machine.  Using less workers can help.
+    random.seed(random.getrandbits(int(params['num_rand_bits'])) \
+                if (params['search_seed']) else os.urandom(4))
     wait_t = random.randint(0,10)
     time.sleep(wait_t)
     print(f"HAHA: {file_num}, {wait_t}", flush=True)
@@ -60,7 +64,7 @@ def loadConfig(cfg_path):
 
         params = json.load(json_file)
         os.makedirs(params['out_dir'],
-                mode=int(params['out_dir_mode'], 8), exist_ok=True)
+                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
 
         print(f"{params['just_spaces']}, {params['block_aligned']}")
     
@@ -77,16 +81,11 @@ def genWorkers():
         if (int(params['num_outs']) >= int(params['num_workers'])) \
         else params['num_outs'])) as pool:
 
-#        result = {}
-
-#        for worker in range(int(params['num_workers'])):
         result = [pool.apply_async(genWordFile, (worker,)) \
                  for worker in range(int(params['num_workers']))]
-#            print(f"{result[worker].get(timeout=11)}, {worker}")
+        #We must stop the zombie apocalypse!
         pool.close()
         pool.join()
-        
-#        print(f"{result}")
 
 #####  main  #####
 
