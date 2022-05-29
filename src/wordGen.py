@@ -2,6 +2,7 @@
 #to fit if necessary.
 
 #####  imports  #####
+
 import argparse
 import json
 import multiprocessing as mp
@@ -19,6 +20,7 @@ params = {'cfg' : '../cfg/default_config.json'}
 
 
 #####  class definitions  #####
+
 class wordGenWorker(int):
 
     def __init__(self, file_num):
@@ -35,15 +37,18 @@ class wordGenWorker(int):
                    f'_{file_num}' + \
                    params['out_ext']
 #        print(f"out: {self.out}\r\n")
-        self.num = file_num
+        self.num = int(file_num)
 
     def genWordFile(self):
-        wait = random.randint(0,10)
-        time.sleep(wait)
-        return self.num
+        wait_t = random.randint(0,10)
+        time.sleep(wait_t)
+        print(f"HAHA: {self.num}, {wait_t}", flush=True)
+        sys.stdout.flush()
+        return {self.num, wait_t}
 
 
 #####  package functions  #####
+
 def loadConfig(cfg_path):
     """Updates the global dictionary with the supplied configuration, if it
        exists, and creates the output directory.
@@ -76,19 +81,24 @@ def genWorkers():
 
        Output: None.
     """
-    pool = mp.Pool(processes=int(params['num_workers'] \
+    #Since it may be obtuse: limit to the lesser of num_out or num_workers
+    with mp.Pool(processes=int(params['num_workers'] \
         if (int(params['num_outs']) >= int(params['num_workers'])) \
-        else params['num_outs']));
+        else params['num_outs'])) as pool:
 
-    result = {}
+#        result = {}
 
-    for worker in range(int(params['num_workers'])):
-        result[worker] = pool.apply_async(wordGenWorker(worker))
-        print(f"{result}, {worker}")
-
-    wordGenWorker(0);
+#        for worker in range(int(params['num_workers'])):
+        result = [pool.apply_async(wordGenWorker, (worker,)) \
+                 for worker in range(int(params['num_workers']))]
+#            print(f"{result[worker].get(timeout=11)}, {worker}")
+        pool.close()
+        pool.join()
+        
+        print(f"{result}")
 
 #####  main  #####
+
 def main():
     """Parses the optionally-supplied config file path and starts the string
        generator.
@@ -111,6 +121,7 @@ def main():
 #    except Exception as err:
 #        print(f"Encountered {err=}, {type(err)=}")
 
+    time.sleep(20)
     print(f"Args: {args.config}\r\n")
 
 if __name__ == '__main__':

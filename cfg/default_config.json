@@ -8,7 +8,7 @@
 	"out_dir"       : "../data/",
 	"out_dir_mode"  : "664",
 	"out_ext"       : ".txt",
-	"num_outs"      : "1",
+	"num_outs"      : "10",
 	"num_words"     : "100",
 	"num_workers"   : "10",
 	"randomize"     : "False",
@@ -16,7 +16,9 @@
 	"special_count" : "0",
 	"words_per_par" : "100",
 	"words_per_sen" : "10",
-	"comments" : {
+	"comments" : 
+	{
+		"dict_path"     : "The fully-qualified path to a \n-separated list of dictionary words",
 	        "just_spaces"   : "Add other special characters?",
 		"num_outs"      : "Number of output files to generate (can inherently limit num_workers)",
         	"num_words"     : "if not using block sizes",
