@@ -1,7 +1,7 @@
 {
 	"block_aligned" : "False",
-	"block_count"   : "1",
-	"block_size"    : "0",
+	"block_count"   : "10",
+	"block_size"    : "256",
 	"dict_path"     : "/usr/share/dict/american-english",
 	"just_spaces"   : "False",
 	"out_base"      : "words",

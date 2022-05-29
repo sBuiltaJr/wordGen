@@ -55,6 +55,20 @@ def getByBlockLimit():
 
        Output : words - list of the randomly-selected words form dict_file
     """
+    word_list = {}
+    #Sadly while loops are still sometimes necessary, even in Python. Block
+    #size assumes the config file already accounts for byte conversions (e.g.:
+    #1 byte per ASCII encoding and between 1-4 for unicode).
+    count = 0
+    index = 0
+
+    while count < (int(params['block_size']) * int(params['block_count'])):
+        word_list[index] = lc.getline(params['dict_path'], \
+                            random.randrange(0, params['dict_size'])).strip()
+        count += len(word_list[index])
+        index += 1
+
+    print(f"Today's HAM: {count}\r\n {word_list}")
     
     return word_list
 
@@ -71,7 +85,7 @@ def getDictWords():
 
        Output : words - list of the randomly-selected words from dict_file
     """
-    if (0 > int(params['block_size'])):
+    if (int(params['block_size']) > 0):
         word_list = getByBlockLimit()
     else:
         word_list = getByWordLimit()
