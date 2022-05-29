@@ -9,7 +9,7 @@
 
 import argparse
 import json
-import linecache
+import linecache as lc
 import multiprocessing as mp
 import os
 import random
@@ -27,7 +27,7 @@ params = {'cfg' : '../cfg/default_config.json'}
 
 #####  pool functions  #####
 
-def getByWordLimit(dict_file):
+def getByWordLimit():
     """Returns a list of random words limited by count.  This is used when the
        num_words parameter is *True* in {params}. Size alignment is not 
        guaranteed and special characters/spaces are not yet added.
@@ -36,10 +36,15 @@ def getByWordLimit(dict_file):
 
        Output : words - list of the randomly-selected words from dict_file
     """
-    
+    word_list = {}
+
+    for i in range(0, int(params['num_words'])):
+        word_list[i] = lc.getline(params['dict_path'], \
+                            random.randrange(0, params['dict_size'])).strip()
+    print(f"Today's meat:\r\n {word_list}")
     return word_list
 
-def getByBlockLimit(dict_file):
+def getByBlockLimit():
     """Returns a list of random words limited by (output) block size.  This is
        used when the num_words parameter is *False* in {params}.  The last word
        may be truncated if a list exactly matching {block_size} is not created.
@@ -54,7 +59,7 @@ def getByBlockLimit(dict_file):
     return word_list
 
 
-def getDictWords(dict_file);
+def getDictWords():
     """Opens the supplied dictionary and returns a random set of words of size
        specificed in the config.  This function is intentionally separate to 
        allow future upgrades to dictionary sources (it's arguably more efficent
@@ -66,11 +71,10 @@ def getDictWords(dict_file);
 
        Output : words - list of the randomly-selected words from dict_file
     """
-
-    if (0 >= int(params['block_size'])):
-        word_list = getByBlockLimit(dict_file)
+    if (0 > int(params['block_size'])):
+        word_list = getByBlockLimit()
     else:
-        word_list = getByWordLimit(dict_file)
+        word_list = getByWordLimit()
 
     return word_list
 
@@ -99,7 +103,7 @@ def genWordFile(file_num):
     #and effectively read-only for each process.
     global params
 
-    status = (True, {})
+    status = (False, {})
     #This is made here purely for readability (and because I like having local
     #variables forward-delcared whenever possible, blame my professors.
     out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
@@ -111,16 +115,12 @@ def genWordFile(file_num):
         #not initialized/empty on your machine.  Using less workers can help.
         random.seed(random.getrandbits(int(params['num_rand_bits'])) \
                     if (params['search_seed']) else os.urandom(8))
-        wait_t = random.randint(0,10)
-        time.sleep(wait_t)
-        print(f"HAHA: {file_num}, {wait_t}", flush=True)
     except Exception as err:
         status = {False, err}
         print(f"Process {file_num} encountered {err=}, {type(err)=}")
 
-
-    with open(params['dict_path'], mode='r') as dict_file:
-        word_list = getDictWords(dict_file)
+    #The dictionary path was validated when loading the config
+    word_list = getDictWords()
 
     #The 'w+' is intentional as we're generating new data.  Save your data if
     #you want it to persist between datase generations (or use a new out_dir)
@@ -155,7 +155,15 @@ def loadConfig(cfg_path):
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
 
         print(f"{params['just_spaces']}, {params['block_aligned']}")
-    
+    #The workers need to know the dictionary line-count to properly grab random
+    #entries but we don't want each to have to manually seek the number, hence
+    #we get it here.  Future versions may push this to a corpus class __init__
+    #It's also a convenient check that the dictionary exists and is accessable.
+    if os.path.isfile(params['dict_path']):
+        params['dict_size'] = sum(1 for line in open(params['dict_path']))
+        print(f"size is {params['dict_size']}")
+    else:
+        return False
 
 def genWorkers():
     """Invokes n parallel wordgenerators, as defiend in the config file.
@@ -200,7 +208,6 @@ def main():
 #    except Exception as err:
 #        print(f"Encountered {err=}, {type(err)=}")
 
-#    time.sleep(20)
     print(f"Args: {args.config}\r\n")
 
 if __name__ == '__main__':
