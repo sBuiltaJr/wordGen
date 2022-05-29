@@ -19,27 +19,71 @@ import time
 params = {'cfg' : '../cfg/default_config.json'}
 
 
-#####  pool definitions  #####
+#####  pool functions  #####
+
+def getDictWords(dict_file);
+    """Opens the supplied dictionary and returns a random set of words of size
+       specificed in the config.  This function is intentionally separate to 
+       allow future upgrades to dictionary sources (it's arguably more efficent
+       to not have the list return).
+
+       Input : dict_file - file-path to the word dictionary
+
+       output : words - list of the randomly-selected words from dict_file
+    """
+
+def genFile(process_file, word_list):
+    """Writes the supplied word list to the supplied file, given the values
+       defined in params_dict.  This is intentionally split from the word list
+       generation to allow for future dictionary source changes.
+
+       Input : process_file - Where to write the data pattern
+               words - list of order-randomizable source words for the file
+    """
+
 
 def genWordFile(file_num):
     """Currently the worker only needs to create its oject-specific file. The
     def assumes params has already been initialized to at least default values.
+    
+    Input: the particular worker's number.
+
+    Output: pass/fail and exception status, if any.
+
     """
     #This doesn't need to be explicitly thread-safe since params is assumed set
     #and effectively read-only for each process.
     global params
 
+    status = (True, {})
+    #This is made here purely for readability (and because I like having local
+    #variables forward-delcared whenever possible, blame my professors.
     out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
           params['out_ext']
 
-    #Note the possibility of IO exceptions if /dev/urandom (or similar) is not
-    #initialized/empty on your machine.  Using less workers can help.
-    random.seed(random.getrandbits(int(params['num_rand_bits'])) \
-                if (params['search_seed']) else os.urandom(4))
-    wait_t = random.randint(0,10)
-    time.sleep(wait_t)
-    print(f"HAHA: {file_num}, {wait_t}", flush=True)
-    return {file_num, wait_t}
+    print(f"Steew {file_num}")
+    try:
+        #Note the possibility of IO exceptions if /dev/urandom (or similar) is
+        #not initialized/empty on your machine.  Using less workers can help.
+        random.seed(random.getrandbits(int(params['num_rand_bits'])) \
+                    if (params['search_seed']) else os.urandom(8))
+        wait_t = random.randint(0,10)
+        time.sleep(wait_t)
+        print(f"HAHA: {file_num}, {wait_t}", flush=True)
+    except Exception as err:
+        status = {False, err}
+        print(f"Process {file_num} encountered {err=}, {type(err)=}")
+
+
+    with open(params['dict_path'], mode='r') as dict_file:
+        getDictWords(dict_file)
+
+    #The 'w+' is intentional as we're generating new data.  Save your data if
+    #you want it to persist between datase generations (or use a new out_dir)
+    with open(params['out_dir'] + out, mode='w+') as process_file:
+        genFile(process_file)
+
+    return status
 
 
 #####  package functions  #####

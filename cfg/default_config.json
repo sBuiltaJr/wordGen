@@ -13,7 +13,7 @@
 	"num_words"     : "100",
 	"num_workers"   : "10",
 	"randomize"     : "False",
-	"search_seed"   : "True",
+	"search_seed"   : "False",
 	"special_count" : "0",
 	"words_per_par" : "100",
 	"words_per_sen" : "10",
@@ -28,7 +28,7 @@
 		"num_workers"   : "How many file generators to create (these directly create the data output files)",
 	        "out_base"      : "The base name for output files (e.g. words -> words_1.txt)",
 		"randomize"     : "Vary string properties somewhat?",
-       		"search_seed"   : "Specify a particular dictionary seed (over using os.urandom)",
+       		"search_seed"   : "Use getrandbits (true) or os.urandom (false) for the worker seeds",
 	        "special_count" : "how many space+ character to add between words (including newline)",
         	"words_per_par" : "The number of words to put in a given paragraph",
 	        "words_per_sen" : "The number of words before adding a period"
