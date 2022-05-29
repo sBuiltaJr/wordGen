@@ -19,32 +19,23 @@ import time
 params = {'cfg' : '../cfg/default_config.json'}
 
 
-#####  class definitions  #####
+#####  pool definitions  #####
 
-class wordGenWorker(int):
+def genWordFile(file_num):
+    """Currently the worker only needs to create its oject-specific file. The
+    def assumes params has already been initialized to at least default values.
+    """
+    #This doesn't need to be explicitly thread-safe since params is assumed set
+    #and effectively read-only for each process.
+    global params
 
-    def __init__(self, file_num):
-        """Currently the worker only needs to create its oject-specific file.
-           The class assumes params has already been initialized to at
-           least default values.
-        """
-        #This doesn't need to be explicitly thread-safe since the dictionary is
-        #assumed initialized and is effectively read-only.
-        global params
+    out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
+          params['out_ext']
 
-        self.out = params['out_dir'] + \
-                   params['out_base'] + \
-                   f'_{file_num}' + \
-                   params['out_ext']
-#        print(f"out: {self.out}\r\n")
-        self.num = int(file_num)
-
-    def genWordFile(self):
-        wait_t = random.randint(0,10)
-        time.sleep(wait_t)
-        print(f"HAHA: {self.num}, {wait_t}", flush=True)
-        sys.stdout.flush()
-        return {self.num, wait_t}
+    wait_t = random.randint(0,10)
+    time.sleep(wait_t)
+    print(f"HAHA: {file_num}, {wait_t}", flush=True)
+    return {file_num, wait_t}
 
 
 #####  package functions  #####
@@ -89,13 +80,13 @@ def genWorkers():
 #        result = {}
 
 #        for worker in range(int(params['num_workers'])):
-        result = [pool.apply_async(wordGenWorker, (worker,)) \
+        result = [pool.apply_async(genWordFile, (worker,)) \
                  for worker in range(int(params['num_workers']))]
 #            print(f"{result[worker].get(timeout=11)}, {worker}")
         pool.close()
         pool.join()
         
-        print(f"{result}")
+#        print(f"{result}")
 
 #####  main  #####
 
@@ -121,7 +112,7 @@ def main():
 #    except Exception as err:
 #        print(f"Encountered {err=}, {type(err)=}")
 
-    time.sleep(20)
+#    time.sleep(20)
     print(f"Args: {args.config}\r\n")
 
 if __name__ == '__main__':
