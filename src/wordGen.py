@@ -9,6 +9,7 @@
 
 import argparse
 import json
+import linecache
 import multiprocessing as mp
 import os
 import random
@@ -35,8 +36,8 @@ def getByWordLimit(dict_file):
 
        Output : words - list of the randomly-selected words from dict_file
     """
-
-    return words
+    
+    return word_list
 
 def getByBlockLimit(dict_file):
     """Returns a list of random words limited by (output) block size.  This is
@@ -49,8 +50,8 @@ def getByBlockLimit(dict_file):
 
        Output : words - list of the randomly-selected words form dict_file
     """
-
-    return words
+    
+    return word_list
 
 
 def getDictWords(dict_file);
@@ -67,15 +68,15 @@ def getDictWords(dict_file);
     """
 
     if (0 >= int(params['block_size'])):
-        words = getByBlockLimit(dict_file)
+        word_list = getByBlockLimit(dict_file)
     else:
-        words= getByWordLimit(dict_file)
+        word_list = getByWordLimit(dict_file)
 
-    return words
+    return word_list
 
 def genFile(process_file, word_list):
     """Writes the supplied word list to the supplied file, given the values
-       defined in params_dict.  This is intentionally split from the word list
+       defined in {params}.  This is intentionally split from the word list
        generation to allow for future dictionary source changes.
 
        Input : process_file - Where to write the data pattern
@@ -119,12 +120,12 @@ def genWordFile(file_num):
 
 
     with open(params['dict_path'], mode='r') as dict_file:
-        getDictWords(dict_file)
+        word_list = getDictWords(dict_file)
 
     #The 'w+' is intentional as we're generating new data.  Save your data if
     #you want it to persist between datase generations (or use a new out_dir)
     with open(params['out_dir'] + out, mode='w+') as process_file:
-        genFile(process_file)
+        genFile(process_file, word_list)
 
     return status
 
