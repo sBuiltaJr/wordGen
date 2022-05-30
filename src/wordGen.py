@@ -126,7 +126,6 @@ def genFile(my_file, word_list, num_list=None):
     """
     written = 0
 
-    print(f"vroom!")
     #There's probably a clever combinational trick out there somehwere I'm not
     #bothering to think of currently.
     for p in range(0, int(params['words_per_par'])):
@@ -138,8 +137,15 @@ def genFile(my_file, word_list, num_list=None):
 
             if 0 == (written % int(params['words_per_sen'])):
                 my_file.write('.')
+            my_file.write(' ')
 
-    print(f"moorv?")
+            for sp in range(0, int(params['special_count'])):
+                #This will eventually be a percentage-based wite influenced by
+                # the {randomize} parameter
+                my_file.write(params['ascii_sp'][random.randrange(0, \
+                                                 len(params['ascii_sp']))])
+        my_file.write(os.linesep)
+
     return
 
 def genWordFile(file_num):
