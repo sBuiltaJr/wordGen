@@ -39,7 +39,6 @@ def getRandNumList():
     """
     num_list = {}
 
-    print(f"yay? {type(params['num_gen']['min'])}")
     #The cfg load has guaranteed both keys are either int or float.
     if isinstance(params['num_gen']['min'], (float)):
         for i in range(0, int(params['num_gen']['count'])) :
@@ -115,7 +114,7 @@ def getDictWords():
 
     return word_list
 
-def genFile(process_file, word_list):
+def genFile(my_file, word_list, num_list=None):
     """Writes the supplied word list to the supplied file, given the values
        defined in {params}.  This is intentionally split from the word list
        generation to allow for future dictionary source changes.
@@ -125,6 +124,22 @@ def genFile(process_file, word_list):
 
        Output: None.
     """
+    written = 0
+
+    print(f"vroom!")
+    #There's probably a clever combinational trick out there somehwere I'm not
+    #bothering to think of currently.
+    for p in range(0, int(params['words_per_par'])):
+        for w in word_list:
+            #The list was generateed randomly so doesn't need shuffling.
+            my_file.write(f"{word_list[w]}")
+            #If only python had a ++ operator
+            written += 1
+
+            if 0 == (written % int(params['words_per_sen'])):
+                my_file.write('.')
+
+    print(f"moorv?")
     return
 
 def genWordFile(file_num):
@@ -140,13 +155,15 @@ def genWordFile(file_num):
     #and effectively read-only for each process.
     global params
 
-    status = (False, {})
     #This is made here purely for readability (and because I like having local
     #variables forward-delcared whenever possible, blame my professors.
+    num_list = {}
     out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
           params['out_ext']
+    status = (False, {})
+    word_list = {}
 
-    print(f"Steew {file_num}")
+    print(f"Steew {out}")
     try:
         #Note the possibility of IO exceptions if /dev/urandom (or similar) is
         #not initialized/empty on your machine.  Using less workers can help.
@@ -165,7 +182,7 @@ def genWordFile(file_num):
     #The 'w+' is intentional as we're generating new data.  Save your data if
     #you want it to persist between datase generations (or use a new out_dir)
     with open(out, mode='w+') as process_file:
-        genFile(process_file, word_list)
+        genFile(process_file, word_list, num_list)
 
     return status
 
@@ -182,6 +199,7 @@ def loadConfig(cfg_path):
     """
     global params
     not_int = False
+    status = (False, {})
 
     if cfg_path :
         params['cfg'] = cfg_path
@@ -203,7 +221,11 @@ def loadConfig(cfg_path):
         params['dict_size'] = sum(1 for line in open(params['dict_path']))
         print(f"size is {params['dict_size']}")
     else:
-        return False
+        return status
+
+    #This could arguably be done in the dictionary declaration but here allows
+    #for better future changes.
+    params['ascii_sp'] = string.punctuation
 
     #Similar as the above, each worker needs to know what the num ranges are as
     #actual values.  Try/Catch is apparently the fastest way to do this check.
@@ -220,9 +242,10 @@ def loadConfig(cfg_path):
             params['num_gen']['max'] = float(params['num_gen']['range_max'])
         except Exception as err:
             print(f"caught error {err=} when trying to float")
-            return False
+            status = {False, err}
 
     print(f"Found nums: {params['num_gen']['min']}, {params['num_gen']['max']}, {not_int}")
+    return status
 
 def genWorkers():
     """Invokes n parallel wordgenerators, as defiend in the config file.
@@ -262,8 +285,9 @@ def main():
 
     args = parser.parse_args()
 #    try:
-    loadConfig(args.config)
-    genWorkers()
+    status = loadConfig(args.config)
+    if not status[0] :
+        status = genWorkers()
 #    except Exception as err:
 #        print(f"Encountered {err=}, {type(err)=}")
 

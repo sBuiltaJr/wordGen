@@ -1,7 +1,7 @@
 {
 	"block_aligned" : "False",
 	"block_count"   : "1",
-	"block_size"    : "256",
+	"block_size"    : "0",
 	"dict_path"     : "/usr/share/dict/american-english",
 	"just_spaces"   : "False",
 	"out_base"      : "words",
@@ -31,7 +31,7 @@
 		"randomize"     : "Vary string properties somewhat?",
        		"search_seed"   : "Use getrandbits (true) or os.urandom (false) for the worker seeds",
 	        "special_count" : "how many space+ character to add between words (including newline)",
-        	"words_per_par" : "The number of words to put in a given paragraph",
+        	"words_per_par" : "The number of words to put in a given paragraph, repeats words if greater than num_words",
 	        "words_per_sen" : "The number of words before adding a period"
 	},
 	"num_gen" :
