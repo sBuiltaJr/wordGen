@@ -125,13 +125,16 @@ def genFile(my_file, word_list, num_list=None):
        Output: None.
     """
     written = 0
+    line = ""
 
     #There's probably a clever combinational trick out there somehwere I'm not
     #bothering to think of currently.
     for p in range(0, int(params['words_per_par'])):
+        #wrong pattern, need to write until words are gone, not per sentence.
         for w in word_list:
             #The list was generateed randomly so doesn't need shuffling.
-            my_file.write(f"{word_list[w]}")
+            line = f"{word_list[w]}"
+            my_file.write(line)
             #If only python had a ++ operator
             written += 1
 
@@ -187,7 +190,8 @@ def genWordFile(file_num):
 
     #The 'w+' is intentional as we're generating new data.  Save your data if
     #you want it to persist between datase generations (or use a new out_dir)
-    with open(out, mode='w+') as process_file:
+    with open(out, mode='w+', encoding=params['out_encoding'], \
+              error=params['out_enc_err']) as process_file:
         genFile(process_file, word_list, num_list)
 
     return status
@@ -224,7 +228,8 @@ def loadConfig(cfg_path):
     #we get it here.  Future versions may push this to a corpus class __init__
     #It's also a convenient check that the dictionary exists and is accessable.
     if os.path.isfile(params['dict_path']):
-        params['dict_size'] = sum(1 for line in open(params['dict_path']))
+        params['dict_size'] = sum(1 for line in open(params['dict_path'], \
+            encoding=params['dict_encoding'], errors=params['dict_enc_err']))
         print(f"size is {params['dict_size']}")
     else:
         return status
