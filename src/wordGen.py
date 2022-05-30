@@ -64,7 +64,7 @@ def getByWordLimit():
     for i in range(0, int(params['num_words'])):
         word_list[i] = lc.getline(params['dict_path'], \
                             random.randrange(0, params['dict_size'])).strip()
-#    print(f"Today's meat:\r\n {word_list}")
+#   print(f"Today's meat:\r\n {word_list}")
     return word_list
 
 def getByBlockLimit():
@@ -124,30 +124,35 @@ def genFile(my_file, word_list, num_list=None):
 
        Output: None.
     """
+    line    = ""
+    paras   = 0
     written = 0
-    line = ""
 
-    #There's probably a clever combinational trick out there somehwere I'm not
-    #bothering to think of currently.
-    for p in range(0, int(params['words_per_par'])):
-        #wrong pattern, need to write until words are gone, not per sentence.
-        for w in word_list:
-            #The list was generateed randomly so doesn't need shuffling.
-            line = f"{word_list[w]}"
-            my_file.write(line)
-            #If only python had a ++ operator
-            written += 1
+    while (paras * int(params['sen_per_par'])) < len(word_list):
+        #There's probably a clever combinational trick out there somehwere I'm
+        #not bothering to think of currently.
+        for p in range(0, int(params['sen_per_par'])):
+            for w in range(0, int(params['words_per_sen'])):
+                #The list was generateed randomly so doesn't need shuffling.
+                line = line + f"{word_list[written]}"
+                #This is where a word list can get wrapped.
+                written = (written + 1) % len(word_list)
+                #Most sentences end with a period (typos and heretics aside)
+                if w < (int(params['words_per_sen'])-1):
+                    line = line + ' '
 
-            if 0 == (written % int(params['words_per_sen'])):
-                my_file.write('.')
-            my_file.write(' ')
+                for sp in range(0, int(params['special_count'])):
+                    #This will eventually be a percentage-based wite influenced
+                    #by the {randomize} parameter
+                    line = line + params['ascii_sp'][random.randrange(0, \
+                                                 len(params['ascii_sp']))]
+            line = line + '.'
+            #Writing sentences seems the best compromise between excessive
+            #writes and monstrous line (sentence) lengths.
+            my_file.write(line + os.linesep)
+            line = ''
+        paras += int(params['sen_per_par'])
 
-            for sp in range(0, int(params['special_count'])):
-                #This will eventually be a percentage-based wite influenced by
-                # the {randomize} parameter
-                my_file.write(params['ascii_sp'][random.randrange(0, \
-                                                 len(params['ascii_sp']))])
-        my_file.write(os.linesep)
 
     return
 
@@ -181,7 +186,7 @@ def genWordFile(file_num):
     except Exception as err:
         status = {False, err}
         print(f"Process {file_num} encountered {err=}, {type(err)=}")
-
+    
     #The dictionary path was validated when loading the config
     word_list = getDictWords()
 
@@ -190,8 +195,7 @@ def genWordFile(file_num):
 
     #The 'w+' is intentional as we're generating new data.  Save your data if
     #you want it to persist between datase generations (or use a new out_dir)
-    with open(out, mode='w+', encoding=params['out_encoding'], \
-              error=params['out_enc_err']) as process_file:
+    with open(out, mode='w+', encoding=params['out_encoding']) as process_file:
         genFile(process_file, word_list, num_list)
 
     return status
@@ -230,7 +234,7 @@ def loadConfig(cfg_path):
     if os.path.isfile(params['dict_path']):
         params['dict_size'] = sum(1 for line in open(params['dict_path'], \
             encoding=params['dict_encoding'], errors=params['dict_enc_err']))
-        print(f"size is {params['dict_size']}")
+#        print(f"size is {params['dict_size']}")
     else:
         return status
 
@@ -255,7 +259,6 @@ def loadConfig(cfg_path):
             print(f"caught error {err=} when trying to float")
             status = {False, err}
 
-    print(f"Found nums: {params['num_gen']['min']}, {params['num_gen']['max']}, {not_int}")
     return status
 
 def genWorkers():

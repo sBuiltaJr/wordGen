@@ -10,7 +10,7 @@
 	"out_dir"       : "../data/",
 	"out_dir_mode"  : "755",
 	"out_enc_err"   : "strict",
-	"out_encodeing" : "utf-8",
+	"out_encoding"  : "ascii",
 	"out_ext"       : ".txt",
 	"num_outs"      : "10",
 	"num_rand_bits" : "128",
@@ -18,9 +18,9 @@
 	"num_workers"   : "10",
 	"randomize"     : "False",
 	"search_seed"   : "False",
-	"special_count" : "2",
-	"words_per_par" : "5",
-	"words_per_sen" : "3",
+	"special_count" : "0",
+	"sen_per_par"   : "10",
+	"words_per_sen" : "10",
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
