@@ -125,10 +125,9 @@ def genFile(my_file, word_list, num_list=None):
        Output: None.
     """
     line    = ""
-    paras   = 0
     written = 0
 
-    while (paras * int(params['sen_per_par'])) < len(word_list):
+    while written < int(params['num_words']):
         #There's probably a clever combinational trick out there somehwere I'm
         #not bothering to think of currently.
         for p in range(0, int(params['sen_per_par'])):
@@ -140,19 +139,26 @@ def genFile(my_file, word_list, num_list=None):
                 #Most sentences end with a period (typos and heretics aside)
                 if w < (int(params['words_per_sen'])-1):
                     line = line + ' '
+                else:
+                    line = line + '. '
+
+                #There needs to be a special exist case to ensure that only the
+                #request number of words are written if the config file doesn't
+                #implicitly specify divisible limits
+                if written == 0:
+                    my_file.write(line)
+                    return
 
                 for sp in range(0, int(params['special_count'])):
                     #This will eventually be a percentage-based wite influenced
                     #by the {randomize} parameter
                     line = line + params['ascii_sp'][random.randrange(0, \
-                                                 len(params['ascii_sp']))]
-            line = line + '.'
-            #Writing sentences seems the best compromise between excessive
-            #writes and monstrous line (sentence) lengths.
-            my_file.write(line + os.linesep)
-            line = ''
-        paras += int(params['sen_per_par'])
-
+                                                     len(params['ascii_sp']))]
+                #Writing sentences seems the best compromise between excessive
+                #writes and monstrous line (sentence) lengths.
+                my_file.write(line)
+                line = ''
+        my_file.write(os.linesep)
 
     return
 
