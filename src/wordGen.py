@@ -163,7 +163,7 @@ def genFile(my_file, word_list, num_list=None):
 
     return
 
-def postProcess():
+def postProcess(file_path):
     """Perofrms and necessary post-processing on files.  For example, the block
        mode usually requires a slight truncation on the output, which is easier
        to do here than inside the loop logic.
@@ -172,6 +172,13 @@ def postProcess():
 
        Output: None.
     """
+    #Block mode is currently the only mode needing post-processing (to trim to
+    #the specificed block size).
+    if 0 != int(params['block_size']):
+        #This is split into multiple steps for readability.  Also we can't just
+        #count size during the loop becuase of encoding shenanigans. We also
+        #know the read is safe because we just wrote the file earlier.
+        os.truncate(file_path, int(params['block_size']))
 
     return
 
@@ -218,7 +225,7 @@ def genWordFile(file_num):
         genFile(process_file, word_list, num_list)
 
     #This is necessary for the block mode but made generic for future changes.
-    postProcess()
+    postProcess(out)
 
     return status
 
