@@ -9,6 +9,7 @@
 
 import argparse
 import json
+import logging as log
 import linecache as lc
 import multiprocessing as mp
 import os
@@ -136,7 +137,7 @@ def genFile(my_file, word_list, num_list=None):
                 line = line + f"{word_list[written]}"
                 #This is where a word list can get wrapped.
                 written = (written + 1) % len(word_list)
-                #Most sentences end with a period (typos and heretics aside)
+                #Most sentences end with a period (typos and heretics aside).
                 if w < (int(params['words_per_sen'])-1):
                     line = line + ' '
                 else:
@@ -144,14 +145,14 @@ def genFile(my_file, word_list, num_list=None):
 
                 #There needs to be a special exist case to ensure that only the
                 #request number of words are written if the config file doesn't
-                #implicitly specify divisible limits
+                #implicitly specify divisible limits.
                 if written == 0:
                     my_file.write(line)
                     return
 
                 for sp in range(0, int(params['special_count'])):
                     #This will eventually be a percentage-based wite influenced
-                    #by the {randomize} parameter
+                    #by the {randomize} parameter.
                     line = line + params['ascii_sp'][random.randrange(0, \
                                                      len(params['ascii_sp']))]
                 #Writing sentences seems the best compromise between excessive
@@ -159,6 +160,18 @@ def genFile(my_file, word_list, num_list=None):
                 my_file.write(line)
                 line = ''
         my_file.write(os.linesep)
+
+    return
+
+def postProcess():
+    """Perofrms and necessary post-processing on files.  For example, the block
+       mode usually requires a slight truncation on the output, which is easier
+       to do here than inside the loop logic.
+
+       Input: None.
+
+       Output: None.
+    """
 
     return
 
@@ -183,7 +196,7 @@ def genWordFile(file_num):
     status = (False, {})
     word_list = {}
 
-    print(f"Steew {out}")
+#    print(f"Steew {out}")
     try:
         #Note the possibility of IO exceptions if /dev/urandom (or similar) is
         #not initialized/empty on your machine.  Using less workers can help.
@@ -193,16 +206,19 @@ def genWordFile(file_num):
         status = {False, err}
         print(f"Process {file_num} encountered {err=}, {type(err)=}")
     
-    #The dictionary path was validated when loading the config
+    #The dictionary path was validated when loading the config.
     word_list = getDictWords()
 
     if (int(params['num_gen']['count']) > 0):
         num_list  = getRandNumList()
 
     #The 'w+' is intentional as we're generating new data.  Save your data if
-    #you want it to persist between datase generations (or use a new out_dir)
+    #you want it to persist between datase generations (or use a new out_dir).
     with open(out, mode='w+', encoding=params['out_encoding']) as process_file:
         genFile(process_file, word_list, num_list)
+
+    #This is necessary for the block mode but made generic for future changes.
+    postProcess()
 
     return status
 
@@ -230,8 +246,15 @@ def loadConfig(cfg_path):
     with open(params['cfg']) as json_file:
 
         params = json.load(json_file)
-        os.makedirs(params['out_dir'],
+        os.makedirs(params['out_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
+    
+    #Individual log files will probably be configurable in the future.
+    os.makedirs(params['log_dir'], \
+                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
+    log.basicConfig(filename=(params['log_dir'] + 'main_log.txt'), \
+         encoding='utf-8', level=getattr(log, params['log_level'].upper()))
+    log.debug(f"using {cfg_path} and logging to {params['log_dir']}")
 
     #The workers need to know the dictionary line-count to properly grab random
     #entries but we don't want each to have to manually seek the number, hence
@@ -240,7 +263,7 @@ def loadConfig(cfg_path):
     if os.path.isfile(params['dict_path']):
         params['dict_size'] = sum(1 for line in open(params['dict_path'], \
             encoding=params['dict_encoding'], errors=params['dict_enc_err']))
-#        print(f"size is {params['dict_size']}")
+        log.debug(f"size is {params['dict_size']}")
     else:
         return status
 
@@ -250,19 +273,19 @@ def loadConfig(cfg_path):
 
     #Similar as the above, each worker needs to know what the num ranges are as
     #actual values.  Try/Catch is apparently the fastest way to do this check.
-    #The int check *must* be first because of type conversions
+    #The int check *must* be first because of type conversions.
     try:
         params['num_gen']['min'] = int(params['num_gen']['range_min'])
         params['num_gen']['max'] = int(params['num_gen']['range_max'])
     except Exception as err:
-        print(f"caught error {err=} when trying to int")
+        log.warning(f"caught error {err=} when trying to int")
         not_int = True
     if not_int:
         try:
             params['num_gen']['min'] = float(params['num_gen']['range_min'])
             params['num_gen']['max'] = float(params['num_gen']['range_max'])
         except Exception as err:
-            print(f"caught error {err=} when trying to float")
+            log.error(f"caught error {err=} when trying to float")
             status = {False, err}
 
     return status
@@ -274,10 +297,12 @@ def genWorkers():
 
        Output: None.
     """
-    #Since it may be obtuse: limit to the lesser of num_out or num_workers
-    with mp.Pool(processes=int(params['num_workers'] \
-        if (int(params['num_outs']) >= int(params['num_workers'])) \
-        else params['num_outs'])) as pool:
+    #f-string expressions don't like evaludating ternaries
+    workers = int(params['num_workers']) if(int(params['num_outs']) >= \
+              int(params['num_workers'])) else int(params['num_outs'])
+    log.debug(f"Starting {workers} workers.")
+    #Since it may be obtuse: limit to the lesser of num_out or num_workers.
+    with mp.Pool(processes=workers) as pool:
 
         result = [pool.apply_async(genWordFile, (worker,)) \
                  for worker in range(int(params['num_workers']))]
@@ -296,7 +321,6 @@ def main():
 
        Output: None.
     """
-    print("Starting?\r\n")
     parser = argparse.ArgumentParser(
                 description="Generates a set of output text strings based on \
                              the input parameters.  This includes special \
@@ -310,8 +334,6 @@ def main():
         status = genWorkers()
 #    except Exception as err:
 #        print(f"Encountered {err=}, {type(err)=}")
-
-    print(f"Args: {args.config}\r\n")
 
 if __name__ == '__main__':
     main()
