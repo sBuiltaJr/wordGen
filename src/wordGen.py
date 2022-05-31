@@ -18,13 +18,14 @@ import string
 import sys
 import time
 
+
 #####  package variables  #####
 
 #The great thing about dictionaries defined at the package level is their global
 #(public-like) capability, avoiding constant passing down to 'lower' defs. 
 #Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
-
+version = '0.0.1'
 
 #####  pool functions  #####
 
@@ -333,8 +334,15 @@ def main():
                              the input parameters.  This includes special \
                              character insertion and randomization.")
     parser.add_argument('--config', help='Optional path to the config file.')
+    parser.add_argument('--version', help='Prints the version and exits.', \
+                        action="store_true")
 
     args = parser.parse_args()
+
+    if args.version:
+        print(f"wordGen version {version}")
+        sys.exit()
+    
 #    try:
     status = loadConfig(args.config)
     if not status[0] :
