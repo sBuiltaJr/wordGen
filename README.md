@@ -30,11 +30,11 @@ wordgen is invoked directly via command-line:
 e.g.:
 ```
 cd /src
-python wordgen.py
+python wordGen.py
 ```
 Or with an optional config file path:
 ```
-python wordgen.py --config <config_file_path>
+python wordGen.py --config <config_file_path>
 ```
 
 ## Limitations/Known Issues
