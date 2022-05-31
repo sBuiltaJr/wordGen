@@ -1,7 +1,7 @@
 {
 	"block_aligned" : "False",
 	"block_count"   : "1",
-	"block_size"    : "64",
+	"block_size"    : "0",
 	"dict_enc_err"  : "replace",
 	"dict_encoding" : "ascii",
 	"dict_path"     : "/usr/share/dict/american-english",
@@ -21,12 +21,12 @@
 	"randomize"     : "False",
 	"search_seed"   : "False",
 	"sen_per_par"   : "10",
-	"special_count" : "0",
+	"special_count" : "2",
 	"words_per_sen" : "10",
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
-		"block_size"    : "Sets the maximum number of characters in a given file.  set to '0' to use the num_words instead",
+		"block_size"    : "Sets the maximum number of characters in a given file.  Set to '0' to use the num_words instead",
 		"dict_path"     : "The fully-qualified path to a newline-separated list of dictionary words",
 	        "just_spaces"   : "Add other special characters?",
 		"num_outs"      : "Number of output files to generate (can inherently limit num_workers)",
@@ -43,11 +43,11 @@
 	"num_gen" :
 	{
 		"count"     : "0",
-		"range_max" : "100",
+		"range_max" : "100e6",
 		"range_min" : "-100",
 		"comments"  :
 		{
-			"count"     : "How many nubmers to generate; block settings might prevent all from being included.",
+			"count"     : "How many numbers to generate; block settings might prevent all from being included.",
 			"range_max" : "The maximum value for the num array elements, whether float or int.  Type much match range_min",
 			"range_min" : "The minimum value for the num array elements, whether float or int.  Type must match range_max"
 		}
