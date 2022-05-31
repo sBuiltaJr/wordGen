@@ -215,7 +215,20 @@ def genWordFile(file_num):
     status = (False, {})
     word_list = {}
 
-#    print(f"Steew {out}")
+    #Each worker makes its own log file for its job.  This will be expanded in
+    #The future to add unique logs for each job execution.
+    main_log = log.getLogger()
+    #Since logging is a centralized client/server, python expects each process
+    #here to add a unique handler instead of making their own logger.
+    w_handler = log.FileHandler(params['log_dir'] + 'worker_' + str(file_num),
+                   mode=params['worker_mode'], encoding=params['log_encoding'])
+    w_handler.setLevel(getattr(log, params['worker_level'].upper()))
+    main_log.addHandler(w_handler)
+    w_log = log.getLogger(f"worker_{file_num}_log")
+    #It's a bit annoying to have to effectively do this twice.
+    w_log.setLevel(getattr(log, params['worker_level'].upper()))
+    w_log.info(f"Created Logger for woker {file_num}")
+
     try:
         #Note the possibility of IO exceptions if /dev/urandom (or similar) is
         #not initialized/empty on your machine.  Using less workers can help.
@@ -244,6 +257,36 @@ def genWordFile(file_num):
 
 #####  package functions  #####
 
+def createLoggers():
+    """Creates logger handlers for each worker, allowing them to write to
+       separate log files.  PYthon's inherent logger class is a server/client
+       model, meaning all logging, even in the pool processes, has to be fed
+       to a centalized formatter.  This is a bad idea and will hopefully 
+       change in future releases.
+
+       Input: None.
+
+       Output: None.
+    """
+    #Individual log files will probably be configurable in the future.
+    os.makedirs(params['log_dir'], \
+                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
+    #We must use basic config because the dict config would require a static
+    #logger definition which then must be manually changed every time cfg.json
+    #changes logger count, which is obviously unworkable.
+    log.basicConfig(filename=(params['log_dir'] + 'main_log.txt'), \
+         encoding='utf-8', level=getattr(log, params['log_level'].upper()))
+    log.debug(f"using {cfg_path} and logging to {params['log_dir']}")
+
+    #Python is the only language where 'truncate' is easy but 'log' is hard.
+
+    #As exampled in the logger cookbook, Python wants events to return to a
+    #single listener that writes to the correct output.
+#    listener = log.handlers.
+
+    return
+
+
 def loadConfig(cfg_path):
     """Updates the global dictionary with the supplied configuration, if it
        exists, and creates the output directory.
@@ -267,13 +310,19 @@ def loadConfig(cfg_path):
         params = json.load(json_file)
         os.makedirs(params['out_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
-    
     #Individual log files will probably be configurable in the future.
     os.makedirs(params['log_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
+    #We must use basic config because the dict config would require a static
+    #logger definition which then must be manually changed every time cfg.json
+    #changes logger count, which is obviously unworkable.
     log.basicConfig(filename=(params['log_dir'] + 'main_log.txt'), \
-         encoding='utf-8', level=getattr(log, params['log_level'].upper()))
+                    encoding=params['log_encoding'], \
+                    level=getattr(log, params['log_level'].upper()))
     log.debug(f"using {cfg_path} and logging to {params['log_dir']}")
+    
+    #Python is the only language where 'truncate' is easy but 'log' is hard.
+#    createLoggers()
 
     #The workers need to know the dictionary line-count to properly grab random
     #entries but we don't want each to have to manually seek the number, hence
@@ -354,12 +403,12 @@ def main():
         print(f"wordGen version {version}")
         sys.exit()
     
-    try:
-        status = loadConfig(args.config)
-        if not status[0] :
-            status = genWorkers()
-    except Exception as err:
-        print(f"Encountered {err=}, {type(err)=}")
+#    try:
+    status = loadConfig(args.config)
+    if not status[0] :
+        status = genWorkers()
+#    except Exception as err:
+#        print(f"Encountered {err=}, {type(err)=}")
 
 if __name__ == '__main__':
     main()

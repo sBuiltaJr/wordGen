@@ -7,6 +7,7 @@
 	"dict_path"     : "/usr/share/dict/american-english",
 	"just_spaces"   : "False",
 	"log_dir"       : "../logs/",
+	"log_encoding"  : "ascii",
 	"log_level"	: "WARNING",
 	"out_base"      : "words",
 	"out_dir"       : "../data/",
@@ -23,6 +24,8 @@
 	"sen_per_par"   : "10",
 	"special_count" : "2",
 	"words_per_sen" : "10",
+	"worker_level"  : "INFO",
+	"worker_mode"   : "w",
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
@@ -38,7 +41,8 @@
        		"search_seed"   : "Use getrandbits (true) or os.urandom (false) for the worker seeds",
 		"sen_per_par"   : "The number of words to put in a given paragraph, repeats words if greater than num_words",
 	        "special_count" : "how many space+ character to add between words (including newline)",
-	        "words_per_sen" : "The number of words before adding a period"
+	        "words_per_sen" : "The number of words before adding a period",
+		"worker_mode"   : "File write mode for the worker logger, w will replace the logs instead of append"
 	},
 	"num_gen" :
 	{
