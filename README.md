@@ -34,7 +34,7 @@ python wordgen.py
 ```
 Or with an optional config file path:
 ```
-python wordgen.-y --config <config_file_path>
+python wordgen.py --config <config_file_path>
 ```
 
 ## Limitations/Known Issues
