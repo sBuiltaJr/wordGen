@@ -1,4 +1,4 @@
-#Version 0.0.2
+# Version 0.0.2
 
 ## Highlights
 - Worker-level logging enabled.
