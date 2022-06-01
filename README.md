@@ -17,7 +17,7 @@ wordGen is not expressly a lorem ipsum generator, though its output can be
 configured for the same purpose.
 
 # Dependencies
-- Python 3.5 or newer
+- Python 3.9 or newer (for encoding handling)
 
 wordGen is a python 3.x project, currently tested on python 3.9.12.  While
 intended to be portable, older versions will not be expressly supported.
@@ -43,7 +43,5 @@ Also see the [changelog](changelog.md).
 - Parameter randomization not currently supported.
 - Windows-based dictionaries untested.
 - Block truncate (via truncate()) may not work on Mac OS.
-- The logger class only logs the main process events.
-- Block alignment in block mode not fully implemented.
 - Numbers and special characters are currently inserted only after words.
 - Special characters are only pulled from the ASCII special set.
