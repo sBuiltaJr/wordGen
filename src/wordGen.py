@@ -355,14 +355,39 @@ def genWorkers():
     workers = int(params['num_workers']) if(int(params['num_outs']) >= \
               int(params['num_workers'])) else int(params['num_outs'])
     log.debug(f"Starting {workers} workers.")
+    #This however, is separate to dynamically give finished workers new work.
+    idles =  range(int(params['num_workers']))
+    out_file = 0
     #Since it may be obtuse: limit to the lesser of num_out or num_workers.
     with mp.Pool(processes=workers) as pool:
 
-        for out_file in range(0, int(params['num_outs'])):
-            result = [pool.apply_async(genWordFile, (worker, out_file,)) \
-                     for worker in range(int(params['num_workers']))]
-            print(f"How many though? {out_file}")
-        print(f"Stati: {result}")
+        while out_file < int(params['num_outs']):
+
+            #The worker check loop will have a null result if everyone's busy
+            if idles:
+                result = [pool.apply_async(genWordFile, (worker, out_file,)) \
+                         for worker in idles]
+                out_file += len(idles)
+                idles = []
+            #Future versions might put a status tracker here.  Or convert it to
+            #a callback count function.  This structure allows workers to be
+            #reused (effectively) as soon as they're finished, instead of
+            #waiting for an entire batch to finish before returning.
+            for w in range(0, workers):
+                try:
+                    done    = result[w].get(float(params['main_timeout']))
+                    #Both properties need to be checked since exceptions will
+                    #pass the 'ready' state but not the 'successful' one.
+                    ready   = result[w].ready()
+                    success = result[w].successful()
+                except Exception as err:
+                    continue
+                idles.append(w)
+                print(f"idles: {idles}")
+
+                if ready and not success:
+                    log.error(f"worker {w} returned error: {result[w]._value}")
+
         #We must stop the zombie apocalypse!
         pool.close()
         pool.join()
