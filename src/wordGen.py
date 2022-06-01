@@ -200,7 +200,7 @@ def postProcess(file_path, w_log):
         w_log.info(f"Not shrinking file: {file_path}")
     return
 
-def genWordFile(file_num):
+def genWordFile(worker, file_num):
     """Currently the worker only needs to create its object-specific file. The
     def assumes params has already been initialized to at least default values.
     
@@ -218,25 +218,25 @@ def genWordFile(file_num):
     num_list = {}
     out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
           params['out_ext']
-    status = (False, {})
+    status = (True, {})
     word_list = {}
 
     #Each worker makes its own log file for its job.  This will be expanded in
     #The future to add unique logs for each job execution.
     #Since logging is a centralized client/server, python expects each process
     #here to add a unique handler instead of making their own logger.
-    w_handler = log.FileHandler(params['log_dir'] + 'worker_' + str(file_num),
+    w_handler = log.FileHandler(params['log_dir'] + 'worker_' + str(worker),
                    mode=params['worker_mode'], encoding=params['log_encoding'])
     w_handler.setLevel(getattr(log, params['worker_level'].upper()))
     #This instance has to be manually passed around until the issue with a pool
     #spawning object instances via classes is resolved.
-    w_log = log.getLogger(f"worker_{file_num}_log")
+    w_log = log.getLogger(f"worker_{worker}_log")
     w_log.addHandler(w_handler)
     #It's a bit annoying to have to effectively do this twice.
     w_log.setLevel(getattr(log, params['worker_level'].upper()))
     #Otherwise worker messages also end up in the main logger.
     w_log.propagate = False
-    w_log.debug(f"Created Logger for woker {file_num}")
+    w_log.debug(f"Created Logger for woker {worker}")
     w_log.debug(f"Out path is {out}")
 
     try:
@@ -247,7 +247,7 @@ def genWordFile(file_num):
         w_log.debug(f"Using rand state: {random.getstate()}")
     except Exception as err:
         status = {False, err}
-        w_log.error(f"Process {file_num} encountered {err=}, {type(err)=}")
+        w_log.error(f"Process {worker} encountered {err=}, {type(err)=}")
     
     #The dictionary path was validated when loading the config.
     word_list = getDictWords(w_log)
@@ -358,11 +358,15 @@ def genWorkers():
     #Since it may be obtuse: limit to the lesser of num_out or num_workers.
     with mp.Pool(processes=workers) as pool:
 
-        result = [pool.apply_async(genWordFile, (worker,)) \
-                 for worker in range(int(params['num_workers']))]
+        for out_file in range(0, int(params['num_outs'])):
+            result = [pool.apply_async(genWordFile, (worker, out_file,)) \
+                     for worker in range(int(params['num_workers']))]
+            print(f"How many though? {out_file}")
+        print(f"Stati: {result}")
         #We must stop the zombie apocalypse!
         pool.close()
         pool.join()
+        print(f"Yep")
 
 
 #####  main  #####

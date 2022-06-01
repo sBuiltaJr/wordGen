@@ -15,7 +15,7 @@
 	"out_enc_err"   : "strict",
 	"out_encoding"  : "ascii",
 	"out_ext"       : ".txt",
-	"num_outs"      : "10",
+	"num_outs"      : "20",
 	"num_rand_bits" : "128",
 	"num_words"     : "1000",
 	"num_workers"   : "10",
