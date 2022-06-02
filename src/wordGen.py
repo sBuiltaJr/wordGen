@@ -118,7 +118,7 @@ def getDictWords(w_log):
 
     return word_list
 
-def genFile(w_log, my_file, word_list, num_list=None):
+def genFile(w_log, out, word_list, num_list=None):
     """Writes the supplied word list to the supplied file, given the values
        defined in {params}.  This is intentionally split from the word list
        generation to allow for future dictionary source changes.
@@ -134,48 +134,67 @@ def genFile(w_log, my_file, word_list, num_list=None):
     num_ind = 0
     written = 0
 
-    while written < int(params['num_words']):
-        #There's probably a clever combinational trick out there somewhere I'm
-        #not bothering to think of currently.
-        for p in range(0, int(params['sen_per_par'])):
-            for w in range(0, int(params['words_per_sen'])):
-                #The list was generated randomly so doesn't need shuffling.
-                line = line + f"{word_list[written]}"
-                #This is where a word list can get wrapped.
-                written = (written + 1) % len(word_list)
-                w_log.debug(f"written: {written}")
-                #Most sentences end with a period (typos and heretics aside).
-                if w < (int(params['words_per_sen'])-1):
-                    line = line + ' '
-                else:
-                    line = line + '. '
+    #Note: the separate writes in the file are to ensure all otuptu is proeprly
+    #flushed to the output file (only guaranteed with exiting the 'with' block)
+    with open(out, mode='w', encoding=params['out_encoding']) as my_file:
+        my_file.write('')
+    try:
+        while written < int(params['num_words']):
+            #There's probably a clever combinational trick out there somewhere
+            #I'm not bothering to think of currently.
+            for p in range(0, int(params['sen_per_par'])):
+                for w in range(0, int(params['words_per_sen'])):
+                    #The list was generated randomly so doesn't need shuffling.
+                    line = line + f"{word_list[written]}"
+                    #This is where a word list can get wrapped.
+                    written = (written + 1) % len(word_list)
+                    w_log.debug(f"written: {written}")
+                    #Most sentences end with a '.' (typos and heretics aside).
+                    if w < (int(params['words_per_sen'])-1):
+                        line = line + ' '
+                    else:
+                        line = line + '. '
 
-                #There needs to be a special exist case to ensure that only the
-                #request number of words are written if the config file doesn't
-                #implicitly specify divisible limits.
-                if written == 0:
-                    w_log.debug(f"Writing last sentence: {line}")
+                    #There needs to be a special exist case to ensure that only
+                    #the request number of words are written if the config file
+                    #doesn't implicitly specify divisible limits.
+                    if written == 0:
+#                        line = line.decode(params['dict_encoding']).encode(\
+#                        params['out_encoding'], errors = params['out_enc_err'])
+                        line = line.encode(params['out_encoding'], errors = params['out_enc_err'])
+
+                        w_log.debug(f"Writing last sentence: {line}")
+                        with open(out, mode='ab') as my_file:
+                            my_file.write(line)
+                        return
+
+                    for sp in range(0, int(params['special_count'])):
+                        #This will eventually be a percentage-based write
+                        #influenced by the {randomize} parameter.
+                        line = line + params['ascii_sp'][random.randrange(0, \
+                                                         len(params['ascii_sp']))]
+                    #Exactly where numbers get injected will probably change in the
+                    #randomization update; for now here seems most correct.
+                    if num_len > 0:
+                        line = line + str(num_list[num_ind]) + " "
+                        #The number list has the same wrapping issue.
+                        num_ind = (num_ind + 1) % num_len
+
+                #Writing sentences seems the best compromise between excessive
+                #writes and monstrous line (sentence) lengths.
+                w_log.debug(f"writing sentence: {line}")
+#                with open(out, mode='ab', encoding=params['out_encoding']) as my_file:
+                with open(out, mode='ab') as my_file:
+                    line = line.encode(params['out_encoding'], errors = params['out_enc_err'])
                     my_file.write(line)
-                    return
-
-                for sp in range(0, int(params['special_count'])):
-                    #This will eventually be a percentage-based write
-                    #influenced by the {randomize} parameter.
-                    line = line + params['ascii_sp'][random.randrange(0, \
-                                                     len(params['ascii_sp']))]
-                #Exactly where numbers get injected will probably change in the
-                #randomization update; for now here seems most correct.
-                if num_len > 0:
-                    line = line + str(num_list[num_ind]) + " "
-                    #The number list has the same wrapping issue.
-                    num_ind = (num_ind + 1) % num_len
-
-            #Writing sentences seems the best compromise between excessive
-            #writes and monstrous line (sentence) lengths.
-            w_log.debug(f"writing sentence: {line}")
-            my_file.write(line)
-            line = ''
-        my_file.write(os.linesep)
+                line = ''
+            with open(out, mode='a', encoding=params['out_encoding']) as my_file:
+#                line = line.encode(params['out_encoding'], errors = params['out_enc_err'])
+                my_file.write(os.linesep)
+    except UnicodeEncodeError as err:
+        w_log.error(f"Dictionary encoding does not match actual encoding!")
+    except Exception as err:
+        print(f" it *is* an exception: {err=}, {line}")
 
     return
 
@@ -220,7 +239,7 @@ def genWordFile(worker, file_num):
           params['out_ext']
     status = (True, {})
     word_list = {}
-
+    
     #Each worker makes its own log file for its job.  This will be expanded in
     #The future to add unique logs for each job execution.
     #Since logging is a centralized client/server, python expects each process
@@ -238,7 +257,7 @@ def genWordFile(worker, file_num):
     w_log.propagate = False
     w_log.debug(f"Created Logger for woker {worker}")
     w_log.debug(f"Out path is {out}")
-
+    
     try:
         #Note the possibility of IO exceptions if /dev/urandom (or similar) is
         #not initialized/empty on your machine.  Using less workers can help.
@@ -248,7 +267,7 @@ def genWordFile(worker, file_num):
     except Exception as err:
         status = {False, err}
         w_log.error(f"Process {worker} encountered {err=}, {type(err)=}")
-    
+
     #The dictionary path was validated when loading the config.
     word_list = getDictWords(w_log)
     w_log.debug(f"word list is: {word_list}")
@@ -259,12 +278,13 @@ def genWordFile(worker, file_num):
 
     #The 'w' is intentional as we're generating new data.  Save your data if
     #you want it to persist between dataset generations (or use a new out_dir).
-    with open(out, mode='w', encoding=params['out_encoding']) as process_file:
-        genFile(w_log, process_file, word_list, num_list)
-
+#    with open(out, mode='w', encoding=params['out_encoding']) as process_file:
+    genFile(w_log, out, word_list, num_list)
+    print(f"out: {worker}")
     #This is necessary for the block mode but made generic for future changes.
     postProcess(out, w_log)
 
+    print(f"done {worker} {file_num}")
     return status
 
 
@@ -305,7 +325,6 @@ def loadConfig(cfg_path):
                     filemode=params['log_mode'], \
                     level=getattr(log, params['log_level'].upper()))
     log.debug(f"using {cfg_path} and logging to {params['log_dir']}")
-    
     #The workers need to know the dictionary line-count to properly grab random
     #entries but we don't want each to have to manually seek the number, hence
     #we get it here.  Future versions may push this to a corpus class __init__
@@ -356,25 +375,40 @@ def genWorkers():
               int(params['num_workers'])) else int(params['num_outs'])
     log.debug(f"Starting {workers} workers.")
     #This however, is separate to dynamically give finished workers new work.
-    idles =  range(int(params['num_workers']))
-    out_file = 0
+    cur_index = 0
+    idles     =  range(0, workers)
+    args = [(w, w) for w in idles]
+#    out_file  = [(num) for num in idles]
     #Since it may be obtuse: limit to the lesser of num_out or num_workers.
     with mp.Pool(processes=workers) as pool:
 
-        while out_file < int(params['num_outs']):
+        while cur_index < int(params['num_outs']):
 
             #The worker check loop will have a null result if everyone's busy
             if idles:
-                result = [pool.apply_async(genWordFile, (worker, out_file,)) \
-                         for worker in idles]
-                out_file += len(idles)
-                idles = []
+                #Starmap wants an iterable of arguments in advance
+#                args = [(w, w + cur_index) for w in idles]
+                print(f"args: {args} {idles} {cur_index} {len(idles)}")
+#                result = [pool.apply_async(genWordFile, (worker, out_file,)) \
+#                         for worker in idles]
+                result = [pool.apply_async(genWordFile, (args[worker][0], args[worker][1],)) \
+                         for worker in range(0, len(idles))]
+
+#                result = pool.starmap_async(genWordFile, args, workers)
+                cur_index += len(idles)
+                print(f"Idle len: {len(idles)}")
+                idles    = []
+                args = []
+#                out_file = []
             #Future versions might put a status tracker here.  Or convert it to
             #a callback count function.  This structure allows workers to be
             #reused (effectively) as soon as they're finished, instead of
             #waiting for an entire batch to finish before returning.
             for w in range(0, workers):
                 try:
+                    print(f"work? {result[w]}")
+                    time.sleep(2)
+                    #result[w].wait(float(params['main_timeout']))
                     done    = result[w].get(float(params['main_timeout']))
                     #Both properties need to be checked since exceptions will
                     #pass the 'ready' state but not the 'successful' one.
@@ -383,7 +417,11 @@ def genWorkers():
                 except Exception as err:
                     continue
                 idles.append(w)
-                print(f"idles: {idles}")
+                args.append((w, cur_index))
+#                out_file.append(w + cur_index)
+                #if only Python had a ++ operator
+                cur_index += 1
+                print(f"idles: {idles} {cur_index}")
 
                 if ready and not success:
                     log.error(f"worker {w} returned error: {result[w]._value}")
@@ -418,12 +456,12 @@ def main():
         print(f"wordGen version {version}")
         sys.exit()
     
-    try:
-        status = loadConfig(args.config)
-        if not status[0] :
-            status = genWorkers()
-    except Exception as err:
-        print(f"Encountered {err=}, {type(err)=}")
+#    try:
+    status = loadConfig(args.config)
+    if not status[0] :
+        status = genWorkers()
+#    except Exception as err:
+#        print(f"Encountered {err=}, {type(err)=}")
 
 if __name__ == '__main__':
     main()

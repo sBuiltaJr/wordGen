@@ -12,7 +12,7 @@
 	"out_base"      : "words",
 	"out_dir"       : "../data/",
 	"out_dir_mode"  : "755",
-	"out_enc_err"   : "strict",
+	"out_enc_err"   : "replace",
 	"out_encoding"  : "ascii",
 	"out_ext"       : ".txt",
 	"main_timeout"  : "0.5",
@@ -25,12 +25,13 @@
 	"sen_per_par"   : "10",
 	"special_count" : "0",
 	"words_per_sen" : "10",
-	"worker_level"  : "Info",
+	"worker_level"  : "DEBUG",
 	"worker_mode"   : "w",
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
 		"block_size"    : "Sets the maximum number of characters in a given file.  Set to '0' to use the num_words instead",
+		"dict_encoding" : "This must match your dictionary's actual encoding; not all files have a BOM and there's no general way to know a file's encoding.  Incorrect encodings will trigger a output write error.",
 		"dict_path"     : "The fully-qualified path to a newline-separated list of dictionary words",
 		"main_timeout"  : "How many seconds to wait before returning on a worker completion check.  Influences how fast workers are given new jobs",
 		"num_outs"      : "Number of output files to generate (can inherently limit num_workers)",
