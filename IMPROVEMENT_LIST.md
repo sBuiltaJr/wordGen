@@ -18,6 +18,7 @@ This is a list of possible upgrades/updates that may be added to the project.  T
 - Proper testing with other encoding types (Asian languages, Russian, Arabic, Sanskrit, etc.)
 - Better Status{} handling/checking in higher-level functions.
 - Actual logger message formatting.
+- Optional output compression (platform-agnostic tools may be hard).
 
 ## Unplanned
 - Unit tester? (can probably borrow an existing one)
