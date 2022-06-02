@@ -38,7 +38,7 @@ python wordGen.py --config <config_file_path>
 ```
 
 ## Limitations/Known Issues
-Also see the [changelog](changelog.md).
+Also see the [changelog](CHANGELOG.md).
 
 - Parameter randomization not currently supported.
 - Windows-based dictionaries untested.

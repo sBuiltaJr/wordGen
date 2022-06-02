@@ -20,7 +20,7 @@
   - Use of open() specifically when writing guarantees the file buffer for each file is flushed before continuing.
 - Added more vertical whitespace to match my own preferences.
 
-#Version 0.0.2
+# Version 0.0.2
 
 ## Highlights
 - Worker-level logging enabled.
