@@ -16,6 +16,8 @@ import os
 import random
 import string
 import sys
+#tqdm is psecifically not being used becuase of the formatting issues and lack
+#of nice parallelization, including conflicts with the logger.
 import time
 
 
@@ -302,6 +304,31 @@ def genWordFile(worker, file_num):
 
 
 #####  package functions  #####
+
+def errRet(err):
+    """Is a generic, reentrant error handling callback for worker functions.
+       Primarily this jsut logs errors and updates any status information
+       necessary to do so.
+
+       Input : err - error condition returned by the worker.
+
+       Output: None.
+    """
+
+    return
+
+def workRet(ret):
+    """Is the generic, reentrant regular worker callback function.  It mostly
+       updates any relevant status information.
+
+       Input : ret - The return value from the worker.
+
+       Output: None.
+    """
+
+    return
+
+
 
 def loadConfig(cfg_path):
     """Updates the global dictionary with the supplied configuration, if it

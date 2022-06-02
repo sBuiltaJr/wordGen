@@ -27,6 +27,7 @@
 	"words_per_sen" : "10",
 	"worker_level"  : "INFO",
 	"worker_mode"   : "w",
+	"worker_reports": "False",
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
