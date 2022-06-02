@@ -1,7 +1,7 @@
 #Generates output of dictionary-supplied words to a given size, notably
 #truncating to fit a given 'block size' if necessary.
 
-#Markovs are being ignored for now cine they're too deterministic and would
+#Markovs are being ignored for now since they're too deterministic and would
 #greatly skew the training data but will probably be optional in the future.
 
 
@@ -132,13 +132,13 @@ def genFile(w_log, out, word_list, num_list=None):
        Output: None.
     """
     line    = ""
-    #This can be independent of the word_list length
+    #This can be independent of the word_list length.
     num_len = len(num_list)
     num_ind = 0
     written = 0
 
     #Note: the separate writes in the file are to ensure all output is properly
-    #flushed to the output file (only guaranteed with exiting the 'with' block)
+    #flushed to the output file (only guaranteed by using a 'with' block).
     with open(out, mode='w', encoding=params['out_encoding']) as my_file:
         my_file.write('')
     try:
@@ -163,8 +163,8 @@ def genFile(w_log, out, word_list, num_list=None):
                         line = line + '. '
 
                     #There needs to be a special exist case to ensure that only
-                    #the request number of words are written if the config file
-                    #doesn't implicitly specify divisible limits.
+                    #the requested number of words are written if the config
+                    #file doesn't implicitly specify divisible limits.
                     if written == 0:
                         line = line.encode(params['out_encoding'], \
                                            errors = params['out_enc_err'])
@@ -179,6 +179,7 @@ def genFile(w_log, out, word_list, num_list=None):
                         #influenced by the {randomize} parameter.
                         line = line + params['ascii_sp'][random.randrange(0, \
                                                     len(params['ascii_sp']))]
+
                     #Exactly where numbers get injected will probably change in
                     #the randomization update; for now here seems most correct.
                     if num_len > 0:
@@ -243,7 +244,7 @@ def genWordFile(worker, file_num):
     global params
 
     #This is made here purely for readability (and because I like having local
-    #variables forward-declared whenever possible, blame my professors.
+    #variables forward-declared whenever possible, blame my professors).
     num_list = {}
     out = params['out_dir'] + params['out_base'] + f'_{file_num}' + \
           params['out_ext']
@@ -382,7 +383,7 @@ def genWorkers():
 
        Output: None.
     """
-    #f-string expressions don't like evaluating ternaries
+    #f-string expressions don't like evaluating ternaries.
     workers = int(params['num_workers']) if(int(params['num_outs']) >= \
               int(params['num_workers'])) else int(params['num_outs'])
     log.debug(f"Starting {workers} workers.")
@@ -396,7 +397,7 @@ def genWorkers():
 
         while cur_index <= int(params['num_outs']):
 
-            #The worker check loop will have a null result if everyone's busy
+            #The worker check loop will have a null result if everyone's busy.
             if idles:
                 log.debug(f"args: {args} {idles} {cur_index} {len(idles)}")
                 result = [pool.apply_async(genWordFile, (args[worker][0], \
@@ -422,7 +423,7 @@ def genWorkers():
 
                 idles.append(w)
                 args.append((w, cur_index))
-                #if only Python had a ++ operator
+                #if only Python had a ++ operator.
                 cur_index += 1
 
                 if ready and not success:
