@@ -1,3 +1,25 @@
+# Version 0.0.3
+
+## Highlights
+- Worker management properly enabled.
+- Unicode shenanigans when writing files resolved.
+- Better logging added at the INFO level.
+
+### Specific Changes
+- Revamped genWorkers to actually handle when workers != out_size.
+  - The args also properly identify which worker is working on which file.
+- Enabled better load-balancing across worker jobs.
+  - The for loop with exception handling effectively catches when a worker is done.
+    - This may be converted to a callback in the future, but testing of 200 files with 100000 word output worked well.
+- Added INFO logs to workers and main about when workers are done and what they're working on.
+- Fixed the bug causing some file generations to end early (unicode issues in genFile())
+  - Added checks to halt execution if the dictionary encoding isn't actually what was specified (apparently 'open()' wasn't actually doing the encode by default).
+  - Added logfile errors when the encoding becomes an issue for writing to files.
+  - Added general exception handling to the write function, just in case.
+- Added better file buffering to genFile().
+  - Use of open() specifically when writing guarantees the file buffer for each file is flushed before continuing.
+- Added more vertical whitespace to match my own preferences.
+
 # Version 0.0.2
 
 ## Highlights

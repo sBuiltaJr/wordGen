@@ -45,3 +45,9 @@ Also see the [changelog](CHANGELOG.md).
 - Block truncate (via truncate()) may not work on Mac OS.
 - Numbers and special characters are currently inserted only after words.
 - Special characters are only pulled from the ASCII special set.
+
+## Common Gochas
+- Do you have permissions to have all the workers writing to their output files concurrently (/etc/security/limits.conf)?
+
+
+
