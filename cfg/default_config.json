@@ -16,7 +16,7 @@
 	"out_encoding"  : "ascii",
 	"out_ext"       : ".txt",
 	"main_timeout"  : "0.5",
-	"num_outs"      : "20",
+	"num_outs"      : "200",
 	"num_rand_bits" : "128",
 	"num_words"     : "1000",
 	"num_workers"   : "10",
@@ -25,7 +25,7 @@
 	"sen_per_par"   : "10",
 	"special_count" : "0",
 	"words_per_sen" : "10",
-	"worker_level"  : "DEBUG",
+	"worker_level"  : "INFO",
 	"worker_mode"   : "w",
 	"comments" : 
 	{
