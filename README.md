@@ -1,7 +1,7 @@
 # wordGen
 ## A Multiprocess Random Word Block Generator
 
-Wordgen is an offline python 3.x tool designed for large-dataset generation of
+wordGen is an offline python 3.x tool designed for large-dataset generation of
 pseudo-random text data (though it also supports small-scale parameters). It 
 samples a provided dictionary file and generates a series of configurable 
 output files based on the included json settings file (defaulted to the
@@ -23,7 +23,7 @@ wordGen is a python 3.x project, currently tested on python 3.9.12.  While
 intended to be portable, older versions will not be expressly supported.
 
 ## License
-wordgen (and all flies in the wordgen repo) fall under the [GPLv3](LICENSE.md)
+wordGen (and all flies in the wordgen repo) fall under the [GPLv3](LICENSE.md)
 
 # Usage
 wordgen is invoked directly via command-line:
