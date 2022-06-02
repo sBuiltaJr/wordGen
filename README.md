@@ -5,7 +5,7 @@ wordGen is an offline python 3.x tool designed for large-dataset generation of
 pseudo-random text data (though it also supports small-scale parameters). It 
 samples a provided dictionary file and generates a series of configurable 
 output files based on the included json settings file (defaulted to the
-[default_config.json file](cfg/default_config.json).
+[default_config.json file](cfg/default_config.json)).
 
 wordGen is highly configurable, such as input/output encoding, RNG sources, 
 insertion of special characters and/or numbers, parameter randomization,
