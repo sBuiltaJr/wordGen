@@ -35,9 +35,9 @@ def getRandNumList(w_log):
        library in accordance to the specified in the {params}.  True random 
        needs require a different implementation.
 
-       Input: 
+       Input: w_log - this worker's logger instance.
 
-       Output:
+       Output: None.
     """
     num_list = {}
 
@@ -62,9 +62,9 @@ def getByWordLimit(w_log):
        {block_size} parameter is <= 0 in {params}. Size alignment is not 
        guaranteed and special characters/spaces are not yet added.
 
-       Input : dict_file - file-object to the word dictionary
+       Input : w_log - this worker's logger instance.
 
-       Output : words - list of the randomly-selected words from dict_file
+       Output : words - list of the randomly-selected words from dict_file.
     """
     word_list = {}
 
@@ -81,9 +81,9 @@ def getByBlockLimit(w_log):
        Finally, this list may need to be further truncated by consumers if
        other parameters, like {randomize} or {special_count} are used.
 
-       Input : dict_file - file-object to the word dictionary
+       Input : w_log - this worker's logger instance.
 
-       Output : words - list of the randomly-selected words form dict_file
+       Output : words - list of the randomly-selected words form dict_file.
     """
     word_list = {}
     #Sadly while loops are still sometimes necessary, even in Python. Block
@@ -109,9 +109,9 @@ def getDictWords(w_log):
        This function assumes the list request and word source are reasonable 
        (e.g. not millions of words or a single word size filling all of RAM)
 
-       Input : dict_file - file-object to the word dictionary
+       Input : w_log - this worker's logger instance.
 
-       Output : words - list of the randomly-selected words from dict_file
+       Output : words - list of the randomly-selected words from dict_file.
     """
 
     if (int(params['block_size']) > 0):
@@ -126,8 +126,10 @@ def genFile(w_log, out, word_list, num_list=None):
        defined in {params}.  This is intentionally split from the word list
        generation to allow for future dictionary source changes.
 
-       Input : process_file - Where to write the data pattern
-               words - list of order-randomizable source words for the file
+       Input : w_log - this worker's logger instance.
+               out - filepath string of Where to write the data pattern.
+               word_list - list source words to write to {out}.
+               num_list - optional list of numbers to inject into {out}.
 
        Output: None.
     """
@@ -214,7 +216,8 @@ def postProcess(file_path, w_log):
        mode usually requires a slight truncation on the output, which is easier
        to do here than inside the loop logic.
 
-       Input: None.
+       Input: file_path - string to the output file.
+              w_log - this worker's logger instance.
 
        Output: None.
     """
@@ -234,7 +237,8 @@ def genWordFile(worker, file_num):
     """Currently the worker only needs to create its object-specific file. The
     def assumes params has already been initialized to at least default values.
     
-    Input: the particular worker's number.
+    Input: worker - the particular worker's number.
+           file_num - number corresponding to which output file to work on.
 
     Output: pass/fail and exception status, if any.
 
@@ -303,7 +307,7 @@ def loadConfig(cfg_path):
     """Updates the global dictionary with the supplied configuration, if it
        exists, and creates the output directory.
 
-       Input : cfg_path : optional CLI input to the json config file
+       Input : cfg_path - optional CLI input to the json config file
 
        Output : None.
     """
@@ -442,7 +446,7 @@ def main():
     """Parses the optionally-supplied config file path and starts the string
        generator.
 
-       Input : config - Where to find the optional config file.
+       Input : config - filepath of where to find the optional config file.
 
        Output: None.
     """
