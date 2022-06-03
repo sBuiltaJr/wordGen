@@ -28,6 +28,10 @@ import time
 #Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
 version = '0.0.3'
+#This is another workaround until the class issue with async is resovled,
+#ideally this is just state data reported back.
+work_times = []
+
 
 #####  pool functions  #####
 
@@ -339,6 +343,7 @@ def loadConfig(cfg_path):
        Output : None.
     """
     global params
+    global work_times
     not_int = False
     status = (False, {})
 
@@ -354,6 +359,12 @@ def loadConfig(cfg_path):
         os.makedirs(params['out_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
 
+    #Other than some memory waste, there's no issue in allocating max timers.
+    #index 0 is specifically for the main thread timing, hence '+ 1'.
+    work_times = [[0.0 for i in range(2)] for t in \
+                                      range(0, int(params['num_workers']) + 1)]
+    log.debug(f"added {int(params['num_workers'])} timers.)")
+
     #Individual log files will probably be configurable in the future.
     os.makedirs(params['log_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
@@ -364,7 +375,7 @@ def loadConfig(cfg_path):
                     encoding=params['log_encoding'], \
                     filemode=params['log_mode'], \
                     level=getattr(log, params['log_level'].upper()))
-    log.debug(f"using {cfg_path} and logging to {params['log_dir']}")
+    log.info(f"using {cfg_path} and logging to {params['log_dir']}")
 
     #The workers need to know the dictionary line-count to properly grab random
     #entries but we don't want each to have to manually seek the number, hence
@@ -477,6 +488,7 @@ def main():
 
        Output: None.
     """
+    global work_times
     parser = argparse.ArgumentParser(
                 description="Generates a set of output text strings based on \
                              the input parameters.  This includes special \
@@ -495,7 +507,14 @@ def main():
         status = loadConfig(args.config)
 
         if not status[0] :
+            work_times[0][0] = time.perf_counter()
             status = genWorkers()
+            #This doesn't need to be set here per se, but it's more readable.
+            work_times[0][1] = time.perf_counter()
+            diff = work_times[0][1] - work_times[0][0] 
+
+            if "True" == params['main_timing']:
+                print(f"Total execution time of: {diff:6f} seconds.")
 
     except Exception as err:
         print(f"Encountered {err=}, {type(err)=}")

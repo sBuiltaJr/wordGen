@@ -16,6 +16,7 @@
 	"out_encoding"  : "ascii",
 	"out_ext"       : ".txt",
 	"main_timeout"  : "0.5",
+	"main_timing"   : "True",
 	"num_outs"      : "200",
 	"num_rand_bits" : "128",
 	"num_words"     : "1000",
@@ -45,7 +46,8 @@
 		"sen_per_par"   : "The number of words to put in a given paragraph, repeats words if greater than num_words",
 	        "special_count" : "how many space+ character to add between words (including newline)",
 	        "words_per_sen" : "The number of words before adding a period",
-		"worker_mode"   : "File write mode for the worker logger, w will replace the logs instead of append"
+		"worker_mode"   : "File write mode for the worker logger, w will replace the logs instead of append",
+		"worker_reports": "Set True to have each worker report on its own execution time/metrics."
 	},
 	"num_gen" :
 	{
