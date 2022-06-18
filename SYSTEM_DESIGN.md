@@ -1,5 +1,5 @@
 # Basic Overview
-wordGen is design to allow for massively parallel, single-core, or a hybrid generation of pseudo-random data for use in large data sets.  The system uses a 30tier approach to tasking:
+wordGen is design to allow for massively parallel, single-core, or a hybrid generation of pseudo-random data for use in large data sets.  The system uses a 3-tier approach to tasking:
  - A User process to initialize resources and respond/report to a user
  - A Manager process to manage specific sets of workers
  - A Worker class to generate data
