@@ -53,13 +53,14 @@ sequenceDiagram
         M->>M: Configure User Process as defined in MCF
     end
     alt Setup Failure
-        M->>U: Report error
+        M-->>U: Report error
         deactivate M
     else Setup Successful
         activate M
         M->>M: Spawn Worker Threads
         M->>MLF: Log as described in the MCF
         M->>W: Begin Work
+        deactivate M
         activate W
         loop Initialization
             WCF->>W: Provide config inputs
@@ -67,15 +68,20 @@ sequenceDiagram
             W->>OF: Create Output file
         end
         alt Setup Failure
-            W->>M: Report error
-            M->>U: Report error
+            activate M
+            W-->>M: Report error
+            M-->>U: Report error
+            deactivate W
+            deactivate M
         else Setup Successful
+            activate W
             W->>W: Generate desire data pattern
             W->>OF: Write data
-            W-->M: Report completion
+            activate M
+            W-->>M: Report completion
             deactivate W
         end
-        M->>U: Report Results
+        M-->>U: Report Results
         deactivate M
     end
     U->>U: Report results
