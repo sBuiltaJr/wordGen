@@ -27,33 +27,57 @@ WordGen's basic workflow (Sequence Diagram) is illustrated below:
 
 ```mermaid
 sequenceDiagram
-    Loop Initialization
-        User->>User: parse user inputs
-        User->>User: Parse User Config File
-        User->>User: Create Managers
-    User->>User: Log events as described in UCF
-    User->>+Manager: Begin work
-    Loop Initialization
-        Manager->>Manager: Parse Manager Config File
-        Manager->>Manager: Find and verify local resources (like dictionaries/a word corpus)
-    alt Setup Successful
-        Manager->>Manager: Spawn Worker Threads
-        Manager->>Manager Log: Log as described in the MCF
-        Manager->>+Worker: Begin Work
-        Loop Initialization
-            Worker->>Worker: Parse Worker Config File
-            Worker->>Worker: Create Log and output files
-        alt Setup Successful
-            Worker->>Worker: Generate desire data pattern
-            Worker->>Output File: Write data
-            Worker->>Worker Log: Log events as described in WCF 
-            Worker-->-Manager: Report completion
-        else
-            Worker-->-Manager: Report error
-        end
-    else
-        Manager->>-User: Report error
+    participant U as User
+    participant UCF as User Config File
+    participant ULF as User Log File
+    participant M as Manager
+    participant MCF as Manager Config File
+    participant MLF as Manager Log File
+    participant W as Worker
+    participant WCF as Worker Config File
+    participant WLF as Worker Log File
+    participant OF as Output File
+
+    loop Initialization
+        U->>U: parse user inputs
+        UCF->>U: Provide config inputs
+        U->>U: Configure User Process as defined in UCF
+        U->>U: Create Managers
     end
-    User->>User: Report results
+    U->>ULF: Log events as described in UCF
+    U->>M: Begin work
+    activate M
+    loop Initialization
+        MCF->>M: Provide config inputs
+        M->>M: Find and verify local resources
+        M->>M: Configure User Process as defined in MCF
+    end
+    alt Setup Failure
+        M->>U: Report error
+        deactivate M
+    else Setup Successful
+        activate M
+        M->>M: Spawn Worker Threads
+        M->>MLF: Log as described in the MCF
+        M->>W: Begin Work
+        activate W
+        loop Initialization
+            WCF->>W: Provide config inputs
+            W->>WLF: Log as described in the WCF
+            W->>OF: Create Output file
+        end
+        alt Setup Failure
+            W->>M: Report error
+            M->>U: Report error
+        else Setup Successful
+            W->>W: Generate desire data pattern
+            W->>OF: Write data
+            W-->M: Report completion
+            deactivate W
+        end
+        M->>U: Report Results
+        deactivate M
+    end
+    U->>U: Report results
 ```
 
