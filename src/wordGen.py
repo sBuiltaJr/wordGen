@@ -16,7 +16,7 @@ import os
 import random
 import string
 import sys
-#tqdm is psecifically not being used becuase of the formatting issues and lack
+#tqdm is specifically not being used because of the formatting issues and lack
 #of nice parallelization, including conflicts with the logger.
 import time
 
@@ -27,10 +27,7 @@ import time
 #(public-like) capability, avoiding constant passing down to 'lower' defs. 
 #Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
-version = '0.0.3'
-#This is another workaround until the class issue with async is resovled,
-#ideally this is just state data reported back.
-work_times = []
+version = '0.0.4'
 
 
 #####  pool functions  #####
@@ -278,7 +275,7 @@ def genWordFile(worker, file_num):
     w_log.propagate = False
     w_log.debug(f"Created Logger for worker {worker}")
     w_log.debug(f"Out path is {out}")
-    
+
     try:
         #Note the possibility of IO exceptions if /dev/urandom (or similar) is
         #not initialized/empty on your machine.  Using less workers can help.
@@ -304,6 +301,7 @@ def genWordFile(worker, file_num):
     postProcess(out, w_log)
 
     w_log.info(f"Worker {worker} done writing file number {file_num}")
+
     return status
 
 
@@ -318,7 +316,8 @@ def errRet(err):
 
        Output: None.
     """
-
+    #These should probably be class functions instead to avoid multi-process
+    #issues when accessing the package list.
     return
 
 def workRet(ret):
@@ -343,7 +342,6 @@ def loadConfig(cfg_path):
        Output : None.
     """
     global params
-    global work_times
     not_int = False
     status = (False, {})
 
@@ -358,12 +356,6 @@ def loadConfig(cfg_path):
         params = json.load(json_file)
         os.makedirs(params['out_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
-
-    #Other than some memory waste, there's no issue in allocating max timers.
-    #index 0 is specifically for the main thread timing, hence '+ 1'.
-    work_times = [[0.0 for i in range(2)] for t in \
-                                      range(0, int(params['num_workers']) + 1)]
-    log.debug(f"added {int(params['num_workers'])} timers.)")
 
     #Individual log files will probably be configurable in the future.
     os.makedirs(params['log_dir'], \
@@ -470,6 +462,7 @@ def genWorkers():
 
                 if ready and not success:
                     log.error(f"worker {w} returned error: {result[w]._value}")
+
             log.info(f"next job list {idles} with {cur_index - workers} done")
 
         #We must stop the zombie apocalypse!
@@ -488,7 +481,7 @@ def main():
 
        Output: None.
     """
-    global work_times
+    total_time = [0.0, 0.0]
     parser = argparse.ArgumentParser(
                 description="Generates a set of output text strings based on \
                              the input parameters.  This includes special \
@@ -507,11 +500,11 @@ def main():
         status = loadConfig(args.config)
 
         if not status[0] :
-            work_times[0][0] = time.perf_counter()
+            total_time[0] = time.perf_counter()
             status = genWorkers()
             #This doesn't need to be set here per se, but it's more readable.
-            work_times[0][1] = time.perf_counter()
-            diff = work_times[0][1] - work_times[0][0] 
+            total_time[1] = time.perf_counter()
+            diff = total_time[1] - total_time[0] 
 
             if "True" == params['main_timing']:
                 print(f"Total execution time of: {diff:6f} seconds.")
