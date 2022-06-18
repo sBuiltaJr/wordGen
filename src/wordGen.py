@@ -16,7 +16,7 @@ import os
 import random
 import string
 import sys
-#tqdm is secifically not being used becuase of the formatting issues and lack
+#tqdm is specifically not being used because of the formatting issues and lack
 #of nice parallelization, including conflicts with the logger.
 import time
 
@@ -27,7 +27,7 @@ import time
 #(public-like) capability, avoiding constant passing down to 'lower' defs. 
 #Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
-version = '0.0.3'
+version = '0.0.4'
 
 
 #####  pool functions  #####
