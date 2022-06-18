@@ -301,7 +301,6 @@ def genWordFile(worker, file_num):
     postProcess(out, w_log)
 
     w_log.info(f"Worker {worker} done writing file number {file_num}")
-    #It's unlikely we'd hit rollover but it may be a future update
 
     return status
 
@@ -343,7 +342,6 @@ def loadConfig(cfg_path):
        Output : None.
     """
     global params
-    #global work_times
     not_int = False
     status = (False, {})
 
@@ -358,12 +356,6 @@ def loadConfig(cfg_path):
         params = json.load(json_file)
         os.makedirs(params['out_dir'], \
                     mode=int(params['out_dir_mode'], 8), exist_ok=True)
-
-    #Other than some memory waste, there's no issue in allocating max timers.
-    #index 0 is specifically for the main thread timing, hence '+ 1'.
-    #work_times = [[0.0 for i in range(2)] for t in \
-    #                                  range(0, int(params['num_workers']) + 1)]
-    #log.debug(f"added {int(params['num_workers'])} timers.)")
 
     #Individual log files will probably be configurable in the future.
     os.makedirs(params['log_dir'], \
@@ -489,7 +481,6 @@ def main():
 
        Output: None.
     """
-    #global work_times
     total_time = [0.0, 0.0]
     parser = argparse.ArgumentParser(
                 description="Generates a set of output text strings based on \
