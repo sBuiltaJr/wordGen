@@ -1,3 +1,12 @@
+# Version 0.0.4
+
+## Highlights
+- Enabled high-precision timing of the generation process.
+
+### Specific Changes
+- Added a wrapper around the invocation of all workers to measure total execution time.
+  - An issue discovered prevents individual worker timing, it is expected to resolved in the future.
+
 # Version 0.0.3
 
 ## Highlights
