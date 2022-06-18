@@ -1,0 +1,62 @@
+{
+	"block_aligned" : "False",
+	"block_count"   : "5",
+	"block_size"    : "0",
+	"dict_enc_err"  : "replace",
+	"dict_encoding" : "ascii",
+	"dict_path"     : "/usr/share/dict/american-english",
+	"log_dir"       : "../logs/",
+	"log_encoding"  : "utf-8",
+	"log_level"	: "WARNING",
+	"log_mode"      : "w",
+	"out_base"      : "words",
+	"out_dir"       : "../data/",
+	"out_dir_mode"  : "755",
+	"out_enc_err"   : "replace",
+	"out_encoding"  : "ascii",
+	"out_ext"       : ".txt",
+	"main_timeout"  : "0.5",
+	"main_timing"   : "True",
+	"num_outs"      : "200",
+	"num_rand_bits" : "128",
+	"num_words"     : "1000",
+	"num_workers"   : "10",
+	"randomize"     : "False",
+	"search_seed"   : "False",
+	"sen_per_par"   : "10",
+	"special_count" : "0",
+	"words_per_sen" : "10",
+	"worker_level"  : "INFO",
+	"worker_mode"   : "w",
+	"comments" : 
+	{
+		"Note"          : "Below comments generated only for non-obvious settings",
+		"block_size"    : "Sets the maximum number of characters in a given file.  Set to '0' to use the num_words instead",
+		"dict_encoding" : "This must match your dictionary's actual encoding; not all files have a BOM and there's no general way to know a file's encoding.  Incorrect encodings will trigger a output write error.",
+		"dict_path"     : "The fully-qualified path to a newline-separated list of dictionary words",
+		"main_timeout"  : "How many seconds to wait before returning on a worker completion check.  Influences how fast workers are given new jobs",
+		"num_outs"      : "Number of output files to generate (can inherently limit num_workers)",
+		"num_rand_bits" : "Number of bits to feed the getranbits function if using search_seed",
+        	"num_words"     : "if not using block sizes",
+		"num_workers"   : "How many file generators to create (these directly create the data output files)",
+	        "out_base"      : "The base name for output files (e.g. words -> words_1.txt)",
+		"randomize"     : "Vary string properties somewhat?",
+       		"search_seed"   : "Use getrandbits (true) or os.urandom (false) for the worker seeds",
+		"sen_per_par"   : "The number of words to put in a given paragraph, repeats words if greater than num_words",
+	        "special_count" : "how many space+ character to add between words (including newline)",
+	        "words_per_sen" : "The number of words before adding a period",
+		"worker_mode"   : "File write mode for the worker logger, w will replace the logs instead of append"
+	},
+	"num_gen" :
+	{
+		"count"     : "0",
+		"range_max" : "1000000",
+		"range_min" : "-100",
+		"comments"  :
+		{
+			"count"     : "How many numbers to generate; block settings might prevent all from being included.",
+			"range_max" : "The maximum value for the num array elements, whether float or int.  Type much match range_min",
+			"range_min" : "The minimum value for the num array elements, whether float or int.  Type must match range_max"
+		}
+	}
+}
