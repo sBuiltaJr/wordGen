@@ -50,7 +50,7 @@ sequenceDiagram
     loop Initialization
         MCF->>M: Provide config inputs
         M->>M: Find and verify local resources
-        M->>M: Configure User Process as defined in MCF
+        M->>M: Configure Manager Process as defined in MCF
     end
     alt Setup Failure
         M-->>U: Report error
@@ -64,6 +64,7 @@ sequenceDiagram
         activate W
         loop Initialization
             WCF->>W: Provide config inputs
+            W->>W: Configure Worker thread as defined in WCF
             W->>WLF: Log as described in the WCF
             W->>OF: Create Output file
         end
@@ -75,7 +76,7 @@ sequenceDiagram
             deactivate M
         else Setup Successful
             activate W
-            W->>W: Generate desire data pattern
+            W->>W: Generate desired data pattern
             W->>OF: Write data
             activate M
             W-->>M: Report completion

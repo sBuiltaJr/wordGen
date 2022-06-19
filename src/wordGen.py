@@ -8,10 +8,12 @@
 #####  imports  #####
 
 import argparse
+import concurrent.futures as cf
 import json
 import logging as log
 import multiprocessing as mp
 import os
+import manager.wordGenManager as jm
 import string
 import sys
 #tqdm is specifically not being used because of the formatting issues and lack
@@ -25,7 +27,7 @@ import time
 #(public-like) capability, avoiding constant passing down to 'lower' defs. 
 #Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
-version = '0.0.5'
+version = '0.1.0'
 
 
 #####  package functions  #####
@@ -51,12 +53,7 @@ def loadConfig(cfg_path):
     with open(params['cfg']) as json_file:
 
         params = json.load(json_file)
-        os.makedirs(params['out_dir'], \
-                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
 
-    #Individual log files will probably be configurable in the future.
-    os.makedirs(params['log_dir'], \
-                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
     #We must use basic config because the dict config would require a static
     #logger definition which then must be manually changed every time cfg.json
     #changes logger count, which is obviously unworkable.
@@ -68,7 +65,7 @@ def loadConfig(cfg_path):
 
     return status
 
-def genWorkers():
+def genManagers():
     """Invokes n parallel wordgenerators, as defined in the config file.
     
        Input: None.
@@ -76,57 +73,101 @@ def genWorkers():
        Output: None.
     """
     #f-string expressions don't like evaluating ternaries.
-    workers = int(params['num_workers']) if(int(params['num_outs']) >= \
-              int(params['num_workers'])) else int(params['num_outs'])
-    log.debug(f"Starting {workers} workers.")
+    managers = int(params['num_managers']) if(int(params['num_outs']) >= \
+               int(params['num_managers'])) else int(params['num_outs'])
+    log.debug(f"Starting {managers} managers.")
     #This however, is separate to dynamically give finished workers new work.
-    cur_index = workers
-    idles     =  range(0, workers)
-    args = [(w, w) for w in idles]
+    cur_index = managers
+    idles     =  range(0, managers)
+    args      = [(m, m) for m in idles]
+    mangs     = [jm.Manager() for m in idles]
+    procs     = []
+    results = []
+
+    #This has been convered explicitly to an asyncio ProcessPool to allow
+    #future versions to invoke Managers across computers (e.g. subprocess_exec
+    #with TCP/UDP data flowing to/from a series of remote terminals).
+    try:
+        #This is explicitly in a try statement explicitly to warn windows users
+        #who specified more than 60 managers in the config file.
+        pool = cf.ProcessPoolExecutor(max_workers=managers)
+    except ValueError as err:
+        log.error(f"Too many managers for the current platform!: {managers}")
+    except Exception as err:
+        log.error(f"Error when making manager pool: {err=}")
 
     #Since it may be obtuse: limit to the lesser of num_out or num_workers.
-    with mp.Pool(processes=workers) as pool:
+    #with mp.Pool(processes=workers) as pool:
 
-        while cur_index <= int(params['num_outs']):
+    while cur_index <= int(params['num_outs']):
 
-            #The worker check loop will have a null result if everyone's busy.
-            if idles:
-                log.debug(f"args: {args} {idles} {cur_index} {len(idles)}")
-                result = [pool.apply_async(genWordFile, (args[worker][0], \
-                         args[worker][1],)) for worker in range(0, len(idles))]
-                idles  = []
-                args   = []
+        #The idles check loop will have a null result if everyone's busy.
+        if idles:
+            log.debug(f"args: {idles} {cur_index} {len(idles)}")
+
+            try:
+                #for i in idles:
+                #    print(f"Adding idle {i}")
+                    #procs.append(pool.map(jm.main, args[i], chunksize=int(params['chunk_size'])))
+                    
+                #results = pool.map(mangs.main, args, chunksize=int(params['chunk_size']))
+                #for i in idles:
+                #    result.append(pool.submit())
+                #    print(f"Result is: {r}")
+                for i in idles:
+                    results.append(pool.submit(mangs[i], args[i]))
+
+                for r in results:
+                    print(f"Result is: {r}")
+
+                cur_index += managers
+            except Exception as err:
+                print(f"Exception when running map: {err=}")
+            
+#            for i in idles:
+#                try:
+#                    print(f"Proc: {i}")
+#                    idles.append(i)
+#                    args.append(i, cur_index)
+#                    cur_index += 1
+#                except cf.TimeoutError as err:
+#                    continue
+#                except cf.CancelledError as err:
+#                    log.warning(f"Maanger {i} was cancelled!")
+#                except Exception as err:
+#                    log.error(f"Caught {err=} from manager {i}!")
 
             #Future versions might put a status tracker here.  Or convert it to
             #a callback count function.  This structure allows workers to be
             #reused (effectively) as soon as they're finished, instead of
             #waiting for an entire batch to finish before returning.
-            for w in range(0, workers):
+#            for m in range(0, managers):
 
-                try:
-                    done    = result[w].get(float(params['main_timeout']))
+#                try:
+#                    done    = result[w].get(float(params['main_timeout']))
                     #Both properties need to be checked since exceptions will
                     #pass the 'ready' state but not the 'successful' one.
-                    ready   = result[w].ready()
-                    success = result[w].successful()
+#                    ready   = result[w].ready()
+#                    success = result[w].successful()
 
-                except Exception as err:
-                    continue
+#                except Exception as err:
+#                    continue
 
-                idles.append(w)
-                args.append((w, cur_index))
+#                idles.append(w)
+#                args.append((w, cur_index))
                 #if only Python had a ++ operator.
-                cur_index += 1
+#                cur_index += 1
 
-                if ready and not success:
-                    log.error(f"worker {w} returned error: {result[w]._value}")
+#                if ready and not success:
+#                    log.error(f"worker {w} returned error: {result[w]._value}")
 
-            log.info(f"next job list {idles} with {cur_index - workers} done")
+#            log.info(f"next job list {idles} with {cur_index - workers} done")
 
         #We must stop the zombie apocalypse!
-        pool.close()
-        pool.join()
-        log.info(f"Worker jobs complete.")
+#        pool.close()
+#        pool.join()
+    pool.shutdown(True, cancel_futures=True)
+    log.info(f"Worker jobs complete.")
 
 
 #####  main  #####
@@ -154,21 +195,21 @@ def main():
         print(f"wordGen version {version}")
         sys.exit()
     
-    try:
-        status = loadConfig(args.config)
+#    try:
+    status = loadConfig(args.config)
 
-        if not status[0] :
-            total_time[0] = time.perf_counter()
-            status = genWorkers()
-            #This doesn't need to be set here per se, but it's more readable.
-            total_time[1] = time.perf_counter()
-            diff = total_time[1] - total_time[0] 
+    if not status[0] :
+        total_time[0] = time.perf_counter()
+        genManagers()
+        #This doesn't need to be set here per se, but it's more readable.
+        total_time[1] = time.perf_counter()
+        diff = total_time[1] - total_time[0] 
 
-            if "True" == params['main_timing']:
-                print(f"Total execution time of: {diff:6f} seconds.")
+        if "True" == params['main_timing']:
+            print(f"Total execution time of: {diff:6f} seconds.")
 
-    except Exception as err:
-        print(f"Encountered {err=}, {type(err)=}")
+#    except Exception as err:
+#        print(f"Encountered {err=}, {type(err)=}")
 
 if __name__ == '__main__':
     main()
