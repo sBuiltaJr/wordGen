@@ -23,6 +23,10 @@ import time
 #Static data only, no file objects or similar (or else!).
 params = {'cfg' : '../cfg/default_config.json'}
 
+#The managers are package variables to allow both local and remote allocation
+#(i.e. within and ouside the same process) to function correctly.
+Managers = []
+
 #####  package functions  #####
 
 def errRet(err):
@@ -189,22 +193,68 @@ def genWorkers():
         log.info(f"Worker jobs complete.")
 
 
-#####  main  #####
+#####  Manager Class  #####
 class Manager:
-    def main(manger, index):
+
+    def __init__(self, manager_id, index):
+        self.ID           = manager_id
+        self.start_index  = index
+        self.start_time   = 0
+        self.worker_count = 5#0
+
+
+    ####  Accessors  ####
+    def getWorkerCount(self):
+        return self.worker_count
+
+    def manage(self):
         """Generates a number of worker files as specifid by the config file.
            The Manager return (report) indicates how many workers succeeded.
 
-           Input : manager - the maanger ID (it's sometimes helpful to know)
-                   index - The first position in num_outs a Worker will work on
+           Input : self - reference to a specific manager instance
 
            Output: None.
         """
-        print(f"Made it with {manager} {index}")
+        print(f"Made it with {self.manager} {self.index}")
 
-        return True
+        return self.worker_count
 
 
-#    if __name__ == '__main__':
-#        main()
 
+
+#####  Entry  #####
+def create(manager_id):
+    """Creates teh local manager instance and assigns it a number.  A separate
+       creation step prevents constant reallocation of managers for new work
+       and better management of lcoal resources (like log files).
+
+       Input: manager_id - The manager's assigned ID
+
+       Output: None.
+    """
+    global Managers
+
+    #This might be converted to allowing a list input instead of requiring the
+    #caller to loop.
+    Managers.append(Manager(manager_id))
+
+
+def start(manager_id, index) :
+    """Serves as the entry point for the manager package and initializes the 
+       local class.  This setup allows classes to be instantiated in the local
+       process instead of from the calling process (which causes weird memroy
+       access/locks and isn't possible with remote processes).
+
+       Input : manager - this manager's ID (it's sometimes useful to know)
+               index - The first position in num_outs a worker will work on
+
+       Output: None.
+    """
+    print(f"Hi? {manger_id} {index}")
+
+    work_done = Manager[manager_id].manage(index)
+
+    #This allows the parent to know which manager finished and reschedule it
+    #specifically. Just having an iterator doesn't identify the actual manager,
+    #especially across an asyncio connection to a remote.
+    return [manager_id, work_done]

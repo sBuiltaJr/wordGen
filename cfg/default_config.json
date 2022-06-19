@@ -1,18 +1,14 @@
 {
-	"chunk_size"    : "5",
 	"log_dir"       : "../logs/",
 	"log_encoding"  : "utf-8",
 	"log_level"	: "WARNING",
 	"log_mode"      : "w",
-	"main_timeout"  : "0.5",
 	"main_timing"   : "True",
-	"num_outs"      : "10",
+	"num_outs"      : "20",
 	"num_managers"  : "10",
 	"comments" : 
 	{
 		"Note"          : "Below comments generated only for non-obvious settings",
-		"chunk_size"    : "The pool chunk batch size for Maangers.  Large chunks work well for many managers",
-		"main_timeout"  : "How many seconds to wait before returning on a Manager completion check.  Influences how fast a Manager starts a new batch of jobs once cmoplete",
 		"num_outs"      : "Number of output files to generate (can inherently limit num_managers)",
 		"num_managers"  : "How many file generator Processes to create.  Windows platforms require this to be less than 61"
 	}

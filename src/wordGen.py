@@ -72,57 +72,50 @@ def genManagers():
 
        Output: None.
     """
-    #f-string expressions don't like evaluating ternaries.
-    managers = int(params['num_managers']) if(int(params['num_outs']) >= \
-               int(params['num_managers'])) else int(params['num_outs'])
-    log.debug(f"Starting {managers} managers.")
-    #This however, is separate to dynamically give finished workers new work.
-    cur_index = managers
-    idles     =  range(0, managers)
-    args      = [(m, m) for m in idles]
-    mangs     = [jm.Manager() for m in idles]
-    procs     = []
+    managers  = int(params['num_managers'])
+    log.info(f"Starting {managers} managers.")
+    num_mans  =  range(0, managers)
+    args      = [[m, m] for m in num_mans]
+    remainder = managers % int(params['num_outs'])
     results = []
+
+    #This should probably try to evenly spread the remainder or adapt to a
+    #user-defined remainder strategy at some future point.  It's added to the
+    #frong since, all else equal, the first manager is likely to finish before
+    #the later managers.
+    args[0][1] += remainder
 
     #This has been convered explicitly to an asyncio ProcessPool to allow
     #future versions to invoke Managers across computers (e.g. subprocess_exec
     #with TCP/UDP data flowing to/from a series of remote terminals).
     try:
-        #This is explicitly in a try statement explicitly to warn windows users
-        #who specified more than 60 managers in the config file.
+        #This is in a try statement explicitly to warn Windows users who
+        #specified more than 60 managers in the config file.
         pool = cf.ProcessPoolExecutor(max_workers=managers)
+        
+        #In the future, this should return the number of workers under a
+        #manager to allow for better load-balancing.
+        [jm.create(m_id) for m_id in num_mans]
+
     except ValueError as err:
         log.error(f"Too many managers for the current platform!: {managers}")
     except Exception as err:
         log.error(f"Error when making manager pool: {err=}")
 
-    #Since it may be obtuse: limit to the lesser of num_out or num_workers.
-    #with mp.Pool(processes=workers) as pool:
+    #Future versions may implement a slip band (like the Managers do) for 
+    #optimizing parallel work (and reducing completion time deviation) but this
+    #is sufficent for now given the complexity of the alternative. The major
+    #change would be: assign Managers a pool proportional to their Worker
+    #allotment and job processing time.
+    try:
+        results = [pool.submit(jm.start, args[m][0], args[m][1]) for m in num_mans]
 
-    while cur_index <= int(params['num_outs']):
+        for r in cf.as_completed(results):
+            res = r.result()
+            print(f"Result is: {res}")
 
-        #The idles check loop will have a null result if everyone's busy.
-        if idles:
-            log.debug(f"args: {idles} {cur_index} {len(idles)}")
-
-            try:
-                #for i in idles:
-                #    print(f"Adding idle {i}")
-                    #procs.append(pool.map(jm.main, args[i], chunksize=int(params['chunk_size'])))
-                    
-                #results = pool.map(mangs.main, args, chunksize=int(params['chunk_size']))
-                #for i in idles:
-                #    result.append(pool.submit())
-                #    print(f"Result is: {r}")
-                for i in idles:
-                    results.append(pool.submit(mangs[i], args[i]))
-
-                for r in results:
-                    print(f"Result is: {r}")
-
-                cur_index += managers
-            except Exception as err:
-                print(f"Exception when running map: {err=}")
+        except Exception as err:
+            print(f"Exception when running submit: {err=}")
             
 #            for i in idles:
 #                try:
