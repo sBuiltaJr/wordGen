@@ -196,18 +196,18 @@ def genWorkers():
 #####  Manager Class  #####
 class Manager:
 
-    def __init__(self, manager_id, index):
+    def __init__(self, manager_id):
         self.ID           = manager_id
-        self.start_index  = index
+        self.start_index  = 0
         self.start_time   = 0
-        self.worker_count = 5#0
+        self.worker_count = 5
 
 
     ####  Accessors  ####
     def getWorkerCount(self):
         return self.worker_count
 
-    def manage(self):
+    def manage(self, index):
         """Generates a number of worker files as specifid by the config file.
            The Manager return (report) indicates how many workers succeeded.
 
@@ -215,7 +215,7 @@ class Manager:
 
            Output: None.
         """
-        print(f"Made it with {self.manager} {self.index}")
+        print(f"Made it with {self.ID} {self.start_index}")
 
         return self.worker_count
 
@@ -245,14 +245,14 @@ def start(manager_id, index) :
        process instead of from the calling process (which causes weird memroy
        access/locks and isn't possible with remote processes).
 
-       Input : manager - this manager's ID (it's sometimes useful to know)
+       Input : manager_id - this manager's ID (it's sometimes useful to know)
                index - The first position in num_outs a worker will work on
 
        Output: None.
     """
-    print(f"Hi? {manger_id} {index}")
+    print(f"Hi? {manager_id} {index}, {len(Managers)}")
 
-    work_done = Manager[manager_id].manage(index)
+    work_done = Managers[manager_id].manage(index)
 
     #This allows the parent to know which manager finished and reschedule it
     #specifically. Just having an iterator doesn't identify the actual manager,
