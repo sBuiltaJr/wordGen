@@ -94,6 +94,7 @@ def genManagers():
     args      = [[m, m] for m in num_mans]
     remainder = int(params['num_outs']) % managers
     results   = []
+    create_ok = []
 
     #This should probably try to evenly spread the remainder or adapt to a
     #user-defined remainder strategy at some future point.  It's added to the
@@ -112,7 +113,7 @@ def genManagers():
         
         #In the future, this should return the number of workers under a
         #manager to allow for better load-balancing.
-        [jm.create(m_id) for m_id in num_mans]
+        [create_ok.append(jm.create(m_id)) for m_id in num_mans]
         log.info(f"Created {managers} Managers")
 
     except ValueError as err:

@@ -26,6 +26,8 @@ params = {'cfg' : '../cfg/default_config.json'}
 #The managers are package variables to allow both local and remote allocation
 #(i.e. within and ouside the same process) to function correctly.
 Managers = []
+#Tracking Maanger IDs prevents needless searches for IDs later.
+Ids      = {}
 
 #####  package functions  #####
 
@@ -207,6 +209,10 @@ class Manager:
     def getWorkerCount(self):
         return self.worker_count
 
+    def getId(self):
+        return self.ID
+
+    #### Definitions ####
     def manage(self, index):
         """Generates a number of worker files as specifid by the config file.
            The Manager return (report) indicates how many workers succeeded.
@@ -224,9 +230,9 @@ class Manager:
 
 #####  Entry  #####
 def create(manager_id):
-    """Creates teh local manager instance and assigns it a number.  A separate
+    """Creates the local manager instance and assigns it a number.  A separate
        creation step prevents constant reallocation of managers for new work
-       and better management of lcoal resources (like log files).
+       and better management of local resources (like log files).
 
        Input: manager_id - The manager's assigned ID
 
@@ -234,25 +240,32 @@ def create(manager_id):
     """
     global Managers
 
-    #This might be converted to allowing a list input instead of requiring the
-    #caller to loop.
-    Managers.append(Manager(manager_id))
+    if manager_id not in Ids :
+        #This might be converted to allowing a list input instead of requiring
+        #the caller to loop.
+        Managers.append(Manager(manager_id))
+        Ids[manager_id] = Managers[manager_id]
+
+    return
 
 
 def start(manager_id, index) :
     """Serves as the entry point for the manager package and initializes the 
        local class.  This setup allows classes to be instantiated in the local
-       process instead of from the calling process (which causes weird memroy
+       process instead of from the calling process (which causes weird memory
        access/locks and isn't possible with remote processes).
 
        Input : manager_id - this manager's ID (it's sometimes useful to know)
                index - The first position in num_outs a worker will work on
 
-       Output: None.
+       Output: manager_id - the ID of the maanger that ran
+               work_done - How much work was done; negative if error
     """
-    print(f"Hi? {manager_id} {index}, {len(Managers)}")
+    #This is explicitly initialized to signify an error return on bad ID.
+    work_done = -1
 
-    work_done = Managers[manager_id].manage(index)
+    if manager_id in Ids :
+        work_done = Managers[manager_id].manage(index)
 
     #This allows the parent to know which manager finished and reschedule it
     #specifically. Just having an iterator doesn't identify the actual manager,
