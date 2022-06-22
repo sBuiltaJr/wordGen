@@ -18,121 +18,12 @@ import time
 
 #####  package variables  #####
 
-#The great thing about dictionaries defined at the package level is their global
-#(public-like) capability, avoiding constant passing down to 'lower' defs. 
-#Static data only, no file objects or similar (or else!).
-params = {'cfg' : '../cfg/default_config.json'}
-
 #The managers are package variables to allow both local and remote allocation
 #(i.e. within and ouside the same process) to function correctly.
 Managers = []
 #Tracking Maanger IDs prevents needless searches for IDs later.
 Ids      = {}
 
-#####  package functions  #####
-
-def errRet(err):
-    """Is a generic, reentrant error handling callback for worker functions.
-       Primarily this jsut logs errors and updates any status information
-       necessary to do so.
-
-       Input : err - error condition returned by the worker.
-
-       Output: None.
-    """
-    #These should probably be class functions instead to avoid multi-process
-    #issues when accessing the package list.
-    return
-
-def workRet(ret):
-    """Is the generic, reentrant regular worker callback function.  It mostly
-       updates any relevant status information.
-
-       Input : ret - The return value from the worker.
-
-       Output: None.
-    """
-
-    return
-
-
-
-def loadConfig(cfg_path):
-    """Updates the global dictionary with the supplied configuration, if it
-       exists, and creates the output directory.
-
-       Input : cfg_path - optional CLI input to the json config file
-
-       Output : None.
-    """
-    global params
-    not_int = False
-    status = (False, {})
-
-    if cfg_path :
-        params['cfg'] = cfg_path
-
-    #Sure this is a little sloppy but we don't need the config after this so
-    #there's no reason to keep the old definition anyways and cause an if split
-    #in the code.
-    with open(params['cfg']) as json_file:
-
-        params = json.load(json_file)
-        os.makedirs(params['out_dir'], \
-                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
-
-    #Individual log files will probably be configurable in the future.
-    os.makedirs(params['log_dir'], \
-                    mode=int(params['out_dir_mode'], 8), exist_ok=True)
-    #We must use basic config because the dict config would require a static
-    #logger definition which then must be manually changed every time cfg.json
-    #changes logger count, which is obviously unworkable.
-    log.basicConfig(filename=(params['log_dir'] + 'main_log.txt'), \
-                    encoding=params['log_encoding'], \
-                    filemode=params['log_mode'], \
-                    level=getattr(log, params['log_level'].upper()))
-    log.info(f"using {cfg_path} and logging to {params['log_dir']}")
-
-    #The workers need to know the dictionary line-count to properly grab random
-    #entries but we don't want each to have to manually seek the number, hence
-    #we get it here.  Future versions may push this to a corpus class __init__
-    #It's also a convenient check that the dictionary exists and is accessible.
-    if os.path.isfile(params['dict_path']):
-        params['dict_size'] = sum(1 for line in open(params['dict_path'], \
-            encoding=params['dict_encoding'], errors=params['dict_enc_err']))
-        log.debug(f"size is {params['dict_size']}")
-    else:
-        log.error(f"Unable to seek size of {params['dict_path']}")
-        return status
-
-    #This could arguably be done in the dictionary declaration but here allows
-    #for better future changes.
-    params['ascii_sp'] = string.punctuation
-    log.debug(f"Special characters are: {params['ascii_sp']}")
-
-    #Similar as the above, each worker needs to know what the num ranges are as
-    #actual values.  Try/Catch is apparently the fastest way to do this check.
-    #The int check *must* be first because of type conversions.
-    log.debug(f"numgen min input: {params['num_gen']['range_min']}")
-    log.debug(f"numgen max input: {params['num_gen']['range_max']}")
-
-    try:
-        params['num_gen']['min'] = int(params['num_gen']['range_min'])
-        params['num_gen']['max'] = int(params['num_gen']['range_max'])
-
-    except Exception as err:
-        log.warning(f"caught error {err=} when trying to int")
-        not_int = True
-
-    if not_int:
-        try:
-            params['num_gen']['min'] = float(params['num_gen']['range_min'])
-            params['num_gen']['max'] = float(params['num_gen']['range_max'])
-        except Exception as err:
-            log.error(f"caught error {err=} when trying to float")
-            status = {False, err}
-
-    return status
 
 def genWorkers():
     """Invokes n parallel wordgenerators, as defined in the config file.
@@ -142,8 +33,8 @@ def genWorkers():
        Output: None.
     """
     #f-string expressions don't like evaluating ternaries.
-    workers = int(params['num_workers']) if(int(params['num_outs']) >= \
-              int(params['num_workers'])) else int(params['num_outs'])
+    workers = int(self.args['num_workers']) if(int(params['num_outs']) >= \
+              int(self.args['num_workers'])) else int(params['num_outs'])
     log.debug(f"Starting {workers} workers.")
     #This however, is separate to dynamically give finished workers new work.
     cur_index = workers
@@ -153,7 +44,7 @@ def genWorkers():
     #Since it may be obtuse: limit to the lesser of num_out or num_workers.
     with mp.Pool(processes=workers) as pool:
 
-        while cur_index <= int(params['num_outs']):
+        while cur_index <= int(self.args['num_outs']):
 
             #The worker check loop will have a null result if everyone's busy.
             if idles:
@@ -170,7 +61,7 @@ def genWorkers():
             for w in range(0, workers):
 
                 try:
-                    done    = result[w].get(float(params['main_timeout']))
+                    done    = result[w].get(float(self.args['main_timeout']))
                     #Both properties need to be checked since exceptions will
                     #pass the 'ready' state but not the 'successful' one.
                     ready   = result[w].ready()
@@ -198,11 +89,84 @@ def genWorkers():
 #####  Manager Class  #####
 class Manager:
 
+    """Notably parses the json config file, verifies the word dictionary can
+       be parsed, and sets the RNG config for this process.  These are checked
+       early to allow for graceful error handlign and early exit on error.
+
+       Input: self - Pointer to the current object instance
+              manager_id - The current maanger's ID
+
+       Output: None - Throws exceptions on error.
+
+    """
     def __init__(self, manager_id):
+        self.args         = {'cfg' : '../cfg/default_manager_config.json'}
+        self.not_int      = False
         self.ID           = manager_id
         self.start_index  = 0
         self.start_time   = 0
         self.worker_count = 5
+
+        print(f"here?")
+        #Sure this is a little sloppy but we don't need the config after this
+        #so there's no reason to keep the old definition anyways and cause an
+        #if split in the code.
+        with open(self.self.args['cfg']) as json_file:
+
+            self.args = json.load(json_file)
+            os.makedirs(self.args['out_dir'], \
+                        mode=int(self.args['out_dir_mode'], 8), exist_ok=True)
+
+        #Individual log files will probably be configurable in the future.
+        os.makedirs(self.args['log_dir'], \
+                        mode=int(self.args['out_dir_mode'], 8), exist_ok=True)
+        #We must use basic config because the dict config would require a
+        #static logger definition which then must be manually changed every
+        #time conf.json changes logger count, which is obviously unworkable.
+        log.basicConfig(filename=(self.args['log_dir'] + 'main_log.txt'), \
+                        encoding=self.args['log_encoding'], \
+                        filemode=self.args['log_mode'], \
+                        level=getattr(log, self.args['log_level'].upper()))
+        log.info(f"using {cfg_path} and logging to {self.args['log_dir']}")
+
+        #The workers need to know the dictionary line-count to properly grab
+        #random entries but we don't want each to have to manually seek the
+        #number, hence we get it here.
+        #It's convenient to check that the dictionary exists and is accessible.
+        if os.path.isfile(self.args['dict_path']):
+            self.args['dict_size'] = sum(1 for line in open(params['dict_path'], \
+              encoding=self.args['dict_encoding'], errors=params['dict_enc_err']))
+            log.debug(f"size is {self.args['dict_size']}")
+        else:
+            log.error(f"Unable to seek size of {self.args['dict_path']}")
+            return status
+
+        #This could arguably be done in the dictionary declaration but here
+        #allows for better future changes.
+        self.args['ascii_sp'] = string.punctuation
+        log.debug(f"Special characters are: {self.args['ascii_sp']}")
+
+        #Similar as the above, each worker needs to know what the num ranges
+        #are as actual values.  Try/Catch is apparently the fastest way to do
+        #this check.
+        #The int check *must* be first because of type conversions.
+        log.debug(f"numgen min input: {self.args['num_gen']['range_min']}")
+        log.debug(f"numgen max input: {self.args['num_gen']['range_max']}")
+
+        try:
+            self.args['num_gen']['min'] = int(params['num_gen']['range_min'])
+            self.args['num_gen']['max'] = int(params['num_gen']['range_max'])
+
+        except Exception as err:
+            log.warning(f"caught error {err=} when trying to int")
+            not_int = True
+
+        if self.not_int:
+            try:
+                self.args['num_gen']['min'] = float(params['num_gen']['range_min'])
+                self.args['num_gen']['max'] = float(params['num_gen']['range_max'])
+            except Exception as err:
+                log.error(f"caught error {err=} when trying to float")
 
 
     ####  Accessors  ####
@@ -227,8 +191,7 @@ class Manager:
 
 
 
-
-#####  Entry  #####
+#####  Package Functions  #####
 def create(manager_id):
     """Creates the local manager instance and assigns it a number.  A separate
        creation step prevents constant reallocation of managers for new work
@@ -258,7 +221,7 @@ def start(manager_id, index) :
        Input : manager_id - this manager's ID (it's sometimes useful to know)
                index - The first position in num_outs a worker will work on
 
-       Output: manager_id - the ID of the maanger that ran
+       Output: manager_id - the ID of the manager that ran
                work_done - How much work was done; negative if error
     """
     #This is explicitly initialized to signify an error return on bad ID.
